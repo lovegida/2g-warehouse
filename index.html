@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2G-倉儲管理系統</title>
+
+    <!-- 載入失敗時把錯誤顯示在畫面上（正常時不會出現） -->
+    <script>
+    (function () {
+        var errs = [];
+        addEventListener('error', function (e) {
+            errs.push(e.message || ('無法載入：' + ((e.target && (e.target.src || e.target.href)) || '未知資源')));
+        }, true);
+        addEventListener('securitypolicyviolation', function (e) {
+            errs.push('安全政策擋下 ' + e.violatedDirective + (e.blockedURI ? '（' + e.blockedURI + '）' : '') + '\n完整政策：' + e.originalPolicy);
+        });
+        addEventListener('load', function () {
+            setTimeout(function () {
+                var app = document.getElementById('app');
+                if (app && app.children.length) return;
+                var box = document.createElement('pre');
+                box.style.cssText = 'white-space:pre-wrap;word-break:break-all;margin:16px;padding:16px;border:3px solid #3E3A39;border-radius:16px;background:#fff;color:#b91c1c;font:14px/1.6 sans-serif';
+                box.textContent = '頁面沒有正常載入，請把這段訊息截圖回報：\n\n' + (errs.length ? errs.join('\n\n') : '沒有收到錯誤訊息');
+                document.body.appendChild(box);
+            }, 1500);
+        });
+    })();
+    </script>
+
+    <!-- 引入 Vue 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.45/dist/vue.global.prod.js"></script>
+
+    <!-- 引入 SheetJS (用於匯出 Excel) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
+    <!-- Tailwind 自定義設定 (符合繪本風格) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: '#FFFCF6',
+                        ink: '#3E3A39',
+                        pink: '#F2A497',
+                        yellow: '#F6D27A',
+                        blue: '#A8D3E6',
+                        green: '#B9DAA5',
+                        grayLight: '#E5E7EB',
+                        grayDark: '#9CA3AF'
+                    },
+                    borderWidth: {
+                        '3': '3px',
+                    },
+                    boxShadow: {
+                        'cute': '4px 4px 0px #3E3A39',
+                        'cute-sm': '2px 2px 0px #3E3A39',
+                        'cute-inner': 'inset 2px 2px 0px #3E3A39',
+                    },
+                    fontFamily: {
+                        'sans': ['jf-openhuninn-1.1', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FFFCF6;
+            color: #3E3A39;
+            /* 隱藏原生滾動條，保持畫面乾淨 */
+            scrollbar-width: thin;
+            scrollbar-color: #F6D27A #FFFCF6;
+        }
+
+        /* 自定義按鈕動畫 */
+        .btn-cute {
+            transition: all 0.1s ease;
+        }
+        .btn-cute:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px #3E3A39;
+        }
+
+        /* 隱藏 input number 的上下箭頭 */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        /* 周邊沒有設定位置時，不顯示右上角的位置標籤 */
+        .loc-badge:empty {
+            display: none;
+        }
+
+        /* 彈窗背景模糊 */
+        .modal-backdrop {
+            background-color: rgba(62, 58, 57, 0.6);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen pb-20">
+
+<div id="app"></div>
+<div id="admin"></div>
+<div id="gate"></div>
+
+<script>
+/* 由 倉儲系統-原始檔.html 的 #app 樣板預先編譯（lib/build），執行時不需要 eval */
+var __appRender = (function (Vue) {
+const _Vue = Vue
+const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode, createTextVNode: _createTextVNode } = _Vue
+
+const _hoisted_1 = { class: "sticky top-0 w-full bg-paper border-b-3 border-ink z-40 shadow-sm" }
+const _hoisted_2 = { class: "hidden lg:block max-w-6xl mx-auto px-4" }
+const _hoisted_3 = { class: "flex flex-wrap justify-center gap-2 sm:gap-4 py-4" }
+const _hoisted_4 = ["onClick"]
+const _hoisted_5 = ["onClick"]
+const _hoisted_6 = ["onClick"]
+const _hoisted_7 = ["onClick"]
+const _hoisted_8 = ["onClick"]
+const _hoisted_9 = ["onClick"]
+const _hoisted_10 = {
+  key: 0,
+  class: "absolute -top-2 -right-2 bg-pink border-2 border-ink rounded-full w-8 h-8 flex items-center justify-center font-bold text-white shadow-cute-sm animate-bounce"
+}
+const _hoisted_11 = { class: "max-w-6xl mx-auto pt-6 lg:pt-10 px-4" }
+const _hoisted_12 = { class: "mb-12" }
+const _hoisted_13 = { class: "text-3xl font-bold mb-6 flex items-center gap-3" }
+const _hoisted_14 = { class: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" }
+const _hoisted_15 = { class: "loc-badge absolute top-2 right-2 bg-paper border-2 border-ink rounded-xl px-2 py-1 text-sm font-bold shadow-cute-sm z-10" }
+const _hoisted_16 = { class: "aspect-square bg-yellow/20 border-2 border-ink rounded-2xl mb-4 overflow-hidden flex items-center justify-center" }
+const _hoisted_17 = ["src", "alt"]
+const _hoisted_18 = ["title"]
+const _hoisted_19 = { class: "text-gray-600 mb-4 font-bold flex justify-between" }
+const _hoisted_20 = { class: "text-sm self-end" }
+const _hoisted_21 = { class: "mt-auto grid grid-cols-3 gap-2" }
+const _hoisted_22 = ["onClick"]
+const _hoisted_23 = ["onClick"]
+const _hoisted_24 = ["onClick"]
+const _hoisted_25 = { class: "text-3xl font-bold mb-6 flex items-center gap-3" }
+const _hoisted_26 = { class: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" }
+const _hoisted_27 = { class: "loc-badge absolute top-2 right-2 bg-paper border-2 border-ink rounded-xl px-2 py-1 text-sm font-bold shadow-cute-sm z-10" }
+const _hoisted_28 = { class: "aspect-square bg-pink/20 border-2 border-ink rounded-2xl mb-4 overflow-hidden flex items-center justify-center" }
+const _hoisted_29 = ["src", "alt"]
+const _hoisted_30 = ["title"]
+const _hoisted_31 = { class: "text-gray-600 mb-4 font-bold flex justify-between" }
+const _hoisted_32 = { class: "text-sm self-end" }
+const _hoisted_33 = { class: "mt-auto grid grid-cols-3 gap-2" }
+const _hoisted_34 = ["onClick"]
+const _hoisted_35 = ["onClick"]
+const _hoisted_36 = ["onClick"]
+const _hoisted_37 = { class: "mb-12" }
+const _hoisted_38 = { class: "text-3xl font-bold mb-6 flex items-center gap-3" }
+const _hoisted_39 = { class: "grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4" }
+const _hoisted_40 = { class: "aspect-square bg-white border-2 border-ink rounded-2xl mb-3 overflow-hidden flex items-center justify-center" }
+const _hoisted_41 = ["src", "alt"]
+const _hoisted_42 = ["title"]
+const _hoisted_43 = ["onClick"]
+const _hoisted_44 = { class: "grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4" }
+const _hoisted_45 = { class: "aspect-square bg-white border-2 border-ink rounded-2xl mb-3 overflow-hidden relative flex items-center justify-center" }
+const _hoisted_46 = ["src", "alt"]
+const _hoisted_47 = ["title"]
+const _hoisted_48 = { class: "grid grid-cols-1 md:grid-cols-2 gap-8" }
+const _hoisted_49 = { class: "bg-white border-3 border-ink rounded-3xl p-6 shadow-cute flex flex-col" }
+const _hoisted_50 = { class: "flex justify-between items-center mb-4" }
+const _hoisted_51 = ["onClick"]
+const _hoisted_52 = {
+  key: 0,
+  class: "text-center text-gray-500 py-10 font-bold flex-1"
+}
+const _hoisted_53 = {
+  key: 1,
+  class: "space-y-3 max-h-[600px] overflow-y-auto pr-2"
+}
+const _hoisted_54 = { class: "font-bold text-pink mr-2" }
+const _hoisted_55 = { class: "font-bold ml-2" }
+const _hoisted_56 = { class: "bg-ink text-white font-bold rounded-lg px-2 py-1 text-sm" }
+const _hoisted_57 = { class: "bg-white border-3 border-ink rounded-3xl p-6 shadow-cute flex flex-col" }
+const _hoisted_58 = { class: "flex justify-between items-center mb-4" }
+const _hoisted_59 = ["onClick"]
+const _hoisted_60 = { class: "bg-green/20 border-2 border-ink rounded-2xl p-4 mb-6" }
+const _hoisted_61 = { class: "grid grid-cols-2 gap-4 mb-4" }
+const _hoisted_62 = ["onUpdate:modelValue"]
+const _hoisted_63 = ["onUpdate:modelValue"]
+const _hoisted_64 = { class: "mb-4" }
+const _hoisted_65 = { class: "flex items-center gap-2" }
+const _hoisted_66 = { class: "cursor-pointer bg-white border-2 border-ink rounded-xl px-4 py-2 font-bold hover:bg-gray-100 flex-shrink-0" }
+const _hoisted_67 = ["onChange"]
+const _hoisted_68 = { class: "text-sm truncate" }
+const _hoisted_69 = { class: "mb-4" }
+const _hoisted_70 = ["onUpdate:modelValue"]
+const _hoisted_71 = {
+  key: 0,
+  class: "text-red-500 font-bold mb-3 bg-red-100 p-2 rounded-xl border border-red-500"
+}
+const _hoisted_72 = ["onClick"]
+const _hoisted_73 = { class: "flex-1 overflow-y-auto pr-2" }
+const _hoisted_74 = {
+  key: 0,
+  class: "text-center text-gray-500 py-4 font-bold"
+}
+const _hoisted_75 = { class: "space-y-4" }
+const _hoisted_76 = { class: "font-bold text-lg mb-2" }
+const _hoisted_77 = { class: "text-sm text-gray-600 mb-2" }
+const _hoisted_78 = { class: "font-bold text-ink" }
+const _hoisted_79 = {
+  key: 0,
+  class: "text-sm bg-white border border-ink p-2 rounded-xl mb-2"
+}
+const _hoisted_80 = { class: "text-xs text-blue bg-blue/20 inline-block px-2 py-1 rounded-lg border border-blue" }
+const _hoisted_81 = { class: "bg-white border-3 border-ink rounded-3xl p-6 shadow-cute" }
+const _hoisted_82 = { class: "flex flex-wrap items-end gap-4 mb-6 bg-paper border-2 border-ink p-4 rounded-2xl" }
+const _hoisted_83 = ["onUpdate:modelValue"]
+const _hoisted_84 = ["onUpdate:modelValue"]
+const _hoisted_85 = { class: "flex-1 min-w-[200px]" }
+const _hoisted_86 = ["onUpdate:modelValue"]
+const _hoisted_87 = ["onClick"]
+const _hoisted_88 = { class: "overflow-x-auto border-2 border-ink rounded-2xl" }
+const _hoisted_89 = { class: "w-full text-left border-collapse min-w-[800px]" }
+const _hoisted_90 = { key: 0 }
+const _hoisted_91 = { class: "p-3 border-r-2 border-ink/20" }
+const _hoisted_92 = { class: "p-3 border-r-2 border-ink/20 font-bold text-ink" }
+const _hoisted_93 = {
+  key: 0,
+  class: "bg-blue/30 px-2 py-1 rounded-lg border border-blue-400 whitespace-nowrap"
+}
+const _hoisted_94 = { class: "p-3 border-r-2 border-ink/20" }
+const _hoisted_95 = { class: "p-3 border-r-2 border-ink/20" }
+const _hoisted_96 = ["title"]
+const _hoisted_97 = { class: "p-3 text-center" }
+const _hoisted_98 = ["onClick"]
+const _hoisted_99 = {
+  key: 0,
+  class: "fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
+}
+const _hoisted_100 = {
+  key: 0,
+  class: "bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-sm relative"
+}
+const _hoisted_101 = ["onClick"]
+const _hoisted_102 = { class: "text-xl font-bold mb-4 mt-2" }
+const _hoisted_103 = { class: "text-sm font-bold text-gray-500 mb-4 bg-white inline-block px-2 py-1 rounded border border-ink" }
+const _hoisted_104 = { class: "space-y-4" }
+const _hoisted_105 = ["onUpdate:modelValue", "max"]
+const _hoisted_106 = {
+  key: 0,
+  class: "text-red-500 font-bold bg-red-100 p-2 rounded-xl border border-red-500 text-center animate-pulse"
+}
+const _hoisted_107 = ["onClick"]
+const _hoisted_108 = {
+  key: 1,
+  class: "bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-2xl relative max-h-[90vh] flex flex-col"
+}
+const _hoisted_109 = ["onClick"]
+const _hoisted_110 = { class: "overflow-y-auto flex-1 pr-2 mb-4" }
+const _hoisted_111 = {
+  key: 0,
+  class: "text-center py-10 font-bold text-gray-500 text-lg"
+}
+const _hoisted_112 = {
+  key: 1,
+  class: "space-y-3 mb-6"
+}
+const _hoisted_113 = { class: "flex items-center gap-3" }
+const _hoisted_114 = { class: "w-12 h-12 bg-gray-100 border border-ink rounded-lg overflow-hidden flex-shrink-0" }
+const _hoisted_115 = ["src"]
+const _hoisted_116 = ["title"]
+const _hoisted_117 = { class: "text-xs text-gray-500 font-bold" }
+const _hoisted_118 = { class: "flex items-center gap-3" }
+const _hoisted_119 = ["onUpdate:modelValue", "max"]
+const _hoisted_120 = ["onClick"]
+const _hoisted_121 = {
+  key: 2,
+  class: "bg-blue/10 border-2 border-ink rounded-2xl p-5"
+}
+const _hoisted_122 = { class: "grid grid-cols-1 sm:grid-cols-2 gap-4" }
+const _hoisted_123 = ["onUpdate:modelValue"]
+const _hoisted_124 = ["onUpdate:modelValue"]
+const _hoisted_125 = ["onUpdate:modelValue"]
+const _hoisted_126 = ["onUpdate:modelValue"]
+const _hoisted_127 = {
+  key: 0,
+  class: "text-red-500 font-bold bg-red-100 p-2 rounded-xl border border-red-500 mt-4 text-center"
+}
+const _hoisted_128 = {
+  key: 0,
+  class: "pt-4 border-t-3 border-ink"
+}
+const _hoisted_129 = ["onClick"]
+const _hoisted_130 = {
+  key: 2,
+  class: "bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-lg relative"
+}
+const _hoisted_131 = ["onClick"]
+const _hoisted_132 = { class: "space-y-4" }
+const _hoisted_133 = ["onUpdate:modelValue"]
+const _hoisted_134 = { class: "relative" }
+const _hoisted_135 = ["onUpdate:modelValue"]
+const _hoisted_136 = { class: "text-xs text-red-500 font-bold mt-1" }
+const _hoisted_137 = { class: "bg-gray-200 px-1 rounded" }
+const _hoisted_138 = ["onUpdate:modelValue"]
+const _hoisted_139 = ["onUpdate:modelValue"]
+const _hoisted_140 = {
+  key: 0,
+  class: "text-red-500 font-bold bg-red-100 p-2 rounded-xl border border-red-500 text-center"
+}
+const _hoisted_141 = ["onClick"]
+const _hoisted_142 = {
+  key: 3,
+  class: "bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-lg relative"
+}
+const _hoisted_143 = ["onClick"]
+const _hoisted_144 = { class: "space-y-4" }
+const _hoisted_145 = ["onUpdate:modelValue"]
+const _hoisted_146 = ["onUpdate:modelValue"]
+const _hoisted_147 = { class: "text-xs text-red-500 font-bold mt-1" }
+const _hoisted_148 = ["onUpdate:modelValue"]
+const _hoisted_149 = {
+  key: 0,
+  class: "text-red-500 font-bold bg-red-100 p-2 rounded-xl border border-red-500 text-center"
+}
+const _hoisted_150 = ["onClick"]
+const _hoisted_151 = {
+  key: 4,
+  class: "bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-sm relative"
+}
+const _hoisted_152 = ["onClick"]
+const _hoisted_153 = { class: "text-lg font-bold mb-6 text-gray-700" }
+const _hoisted_154 = { class: "space-y-4" }
+const _hoisted_155 = ["onUpdate:modelValue"]
+const _hoisted_156 = ["onUpdate:modelValue"]
+const _hoisted_157 = {
+  key: 0,
+  class: "text-red-500 font-bold bg-red-100 p-2 rounded-xl border border-red-500 text-center"
+}
+const _hoisted_158 = ["onClick"]
+const _hoisted_159 = {
+  key: 5,
+  class: "bg-paper border-3 border-ink rounded-3xl p-8 shadow-cute w-full max-w-sm relative text-center"
+}
+const _hoisted_160 = { class: "bg-blue border-3 border-ink rounded-2xl py-4 px-6 text-2xl font-black text-ink mb-6 shadow-cute-inner" }
+const _hoisted_161 = ["onClick"]
+const _hoisted_162 = {
+  key: 6,
+  class: "bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-2xl relative"
+}
+const _hoisted_163 = ["onClick"]
+const _hoisted_164 = { class: "mb-4 bg-white border-2 border-ink rounded-xl p-4 flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold" }
+const _hoisted_165 = {
+  key: 0,
+  class: "text-blue-600"
+}
+const _hoisted_166 = {
+  key: 1,
+  class: "text-pink-600"
+}
+const _hoisted_167 = { class: "overflow-y-auto max-h-[50vh] border-2 border-ink rounded-xl bg-white" }
+const _hoisted_168 = { class: "w-full text-left border-collapse" }
+const _hoisted_169 = { class: "p-3 border-r-2 border-ink/10 font-bold text-base" }
+const _hoisted_170 = ["onClick"]
+
+return function render(_ctx, _cache) {
+  with (_ctx) {
+    const { normalizeClass: _normalizeClass, createElementVNode: _createElementVNode, toDisplayString: _toDisplayString, openBlock: _openBlock, createElementBlock: _createElementBlock, createCommentVNode: _createCommentVNode, vShow: _vShow, withDirectives: _withDirectives, createTextVNode: _createTextVNode, renderList: _renderList, Fragment: _Fragment, vModelText: _vModelText, Teleport: _Teleport, createBlock: _createBlock } = _Vue
+
+    return (_openBlock(), _createElementBlock(_Fragment, null, [
+      _createElementVNode("nav", _hoisted_1, [_Vue.createVNode(MobileNav), _createElementVNode("div", _hoisted_2, [_createElementVNode("div", _hoisted_3, [
+        _createElementVNode("button", {
+          onClick: $event => (activeTab = 'current'),
+          class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'current' ? 'bg-yellow shadow-cute' : 'bg-white hover:bg-yellow/50'])
+        }, " 目前上架周邊 ", 10, _hoisted_4),
+        _createElementVNode("button", {
+          onClick: $event => (activeTab = 'discontinued'),
+          class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'discontinued' ? 'bg-pink shadow-cute' : 'bg-white hover:bg-pink/50'])
+        }, " 已下架周邊 ", 10, _hoisted_5),
+        _createElementVNode("button", {
+          onClick: $event => (activeTab = 'wishlist'),
+          class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'wishlist' ? 'bg-blue shadow-cute' : 'bg-white hover:bg-blue/50'])
+        }, " 許願池 ", 10, _hoisted_6),
+        _createElementVNode("button", {
+          onClick: $event => (activeTab = 'logs'),
+          class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'logs' ? 'bg-green shadow-cute' : 'bg-white hover:bg-green/50'])
+        }, " 出入庫紀錄 ", 10, _hoisted_7),
+        _createElementVNode("button", {
+          onClick: $event => (activeTab = 'notes'),
+          class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'notes' ? 'bg-yellow shadow-cute' : 'bg-white hover:bg-yellow/50'])
+        }, " 周邊相關記事 ", 10, _hoisted_8),
+        _createElementVNode("button", {
+          onClick: $event => (activeTab = 'feedback'),
+          class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'feedback' ? 'bg-pink shadow-cute' : 'bg-white hover:bg-pink/50'])
+        }, " 夥伴測試意見回饋表 ", 10, ["onClick"])
+      ])])]),
+      _withDirectives(_createElementVNode("button", {
+        onClick: $event => (openModal('checkout')),
+        class: "fixed bottom-8 right-8 bg-blue text-ink p-4 rounded-full shadow-cute border-3 border-ink z-40 flex items-center justify-center hover:-translate-y-1 transition duration-200 w-16 h-16"
+      }, [_cache[0] || (_cache[0] = _createElementVNode("span", { class: "text-3xl" }, "🛒", -1)), (cart.length > 0)
+        ? (_openBlock(), _createElementBlock("span", _hoisted_10, _toDisplayString(cart.length), 1))
+        : _createCommentVNode("", true)], 8, _hoisted_9), [[_vShow, activeTab === 'current' || activeTab === 'discontinued']]),
+      _createElementVNode("main", _hoisted_11, [
+        _Vue.createVNode(FeedbackSection),
+        _withDirectives(_createElementVNode("div", null, [_Vue.createVNode(ShelfBulletin), _Vue.createVNode(QuotaSection), _createElementVNode("div", _hoisted_12, [_createElementVNode("h2", _hoisted_13, [_cache[1] || (_cache[1] = _createElementVNode("span", { class: "bg-yellow w-4 h-8 rounded-full border-2 border-ink inline-block" }, null, -1)), _createTextVNode(" 已上架周邊 (" + _toDisplayString(mainItems.length) + ") ", 1)]), _createElementVNode("div", _hoisted_14, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(mainItems, (item) => {
+          return (_openBlock(), _createElementBlock("div", {
+            key: item.id,
+            class: "bg-white border-3 border-ink rounded-3xl p-4 shadow-cute flex flex-col h-full relative overflow-hidden"
+          }, [
+            _createElementVNode("div", _hoisted_15, _toDisplayString(item.location), 1),
+            _createElementVNode("div", _hoisted_16, [_createElementVNode("img", {
+              src: item.image,
+              alt: item.name,
+              class: "w-full h-48 object-contain rounded-t-2xl"
+            }, null, 8, _hoisted_17)]),
+            _createElementVNode("h3", {
+              class: "text-xl font-bold mb-1 line-clamp-1",
+              title: item.name
+            }, _toDisplayString(item.name), 9, _hoisted_18),
+            _createElementVNode("div", _hoisted_19, [_createElementVNode("span", null, [_cache[2] || (_cache[2] = _createTextVNode("庫存: ", -1)), _createElementVNode("span", { class: _normalizeClass({'text-red-500 text-xl': item.stock <= 10, 'text-ink text-xl': item.stock > 10}) }, _toDisplayString(item.stock), 3)]), _createElementVNode("span", _hoisted_20, "成本: $" + _toDisplayString(item.cost), 1)]),
+            _createElementVNode("div", _hoisted_21, [_createElementVNode("button", {
+              onClick: $event => (openModal('addToCart', item)),
+              class: "bg-blue border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm flex items-center justify-center gap-1"
+            }, " 🛒 加入 ", 8, _hoisted_22), _createElementVNode("button", {
+              onClick: $event => (openModal('return', item)),
+              class: "bg-pink border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
+            }, "歸還", 8, _hoisted_23), _createElementVNode("button", {
+              onClick: $event => (openModal('restock', item)),
+              class: "bg-green border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
+            }, "補貨", 8, _hoisted_24)])
+          ]))
+        }), 128))])]), _createElementVNode("div", null, [_createElementVNode("h2", _hoisted_25, [_cache[3] || (_cache[3] = _createElementVNode("span", { class: "bg-pink w-4 h-8 rounded-full border-2 border-ink inline-block" }, null, -1)), _createTextVNode(" 加贈區 (" + _toDisplayString(bonusItems.length) + ") ", 1)]), _createElementVNode("div", _hoisted_26, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(bonusItems, (item) => {
+          return (_openBlock(), _createElementBlock("div", {
+            key: item.id,
+            class: "bg-white border-3 border-ink rounded-3xl p-4 shadow-cute flex flex-col h-full relative overflow-hidden"
+          }, [
+            _createElementVNode("div", _hoisted_27, _toDisplayString(item.location), 1),
+            _createElementVNode("div", _hoisted_28, [_createElementVNode("img", {
+              src: item.image,
+              alt: item.name,
+              class: "w-full h-48 object-contain rounded-t-2xl"
+            }, null, 8, _hoisted_29)]),
+            _createElementVNode("h3", {
+              class: "text-xl font-bold mb-1 line-clamp-1",
+              title: item.name
+            }, _toDisplayString(item.name), 9, _hoisted_30),
+            _createElementVNode("div", _hoisted_31, [_createElementVNode("span", null, [_cache[4] || (_cache[4] = _createTextVNode("庫存: ", -1)), _createElementVNode("span", { class: _normalizeClass({'text-red-500 text-xl': item.stock <= 10, 'text-ink text-xl': item.stock > 10}) }, _toDisplayString(item.stock), 3)]), _createElementVNode("span", _hoisted_32, "成本: $" + _toDisplayString(item.cost), 1)]),
+            _createElementVNode("div", _hoisted_33, [_createElementVNode("button", {
+              onClick: $event => (openModal('addToCart', item)),
+              class: "bg-blue border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm flex items-center justify-center gap-1"
+            }, " 🛒 加入 ", 8, _hoisted_34), _createElementVNode("button", {
+              onClick: $event => (openModal('return', item)),
+              class: "bg-pink border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
+            }, "歸還", 8, _hoisted_35), _createElementVNode("button", {
+              onClick: $event => (openModal('restock', item)),
+              class: "bg-green border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
+            }, "補貨", 8, _hoisted_36)])
+          ]))
+        }), 128))])])], 512), [[_vShow, activeTab === 'current']]),
+        _withDirectives(_createElementVNode("div", null, [_Vue.createVNode(OffShelfBulletin), _createElementVNode("div", _hoisted_37, [_createElementVNode("h2", _hoisted_38, [_cache[6] || (_cache[6] = _createElementVNode("span", { class: "bg-grayLight w-4 h-8 rounded-full border-2 border-ink inline-block" }, null, -1)), _createTextVNode(" 已下架周邊 (" + _toDisplayString(discontinuedItems.length) + ") ", 1)]), _createElementVNode("div", _hoisted_39, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(discontinuedItems, (item) => {
+          return (_openBlock(), _createElementBlock("div", {
+            key: item.id,
+            class: "bg-grayLight border-3 border-ink rounded-3xl p-3 shadow-cute flex flex-col h-full"
+          }, [_createElementVNode("div", _hoisted_40, [_createElementVNode("img", {
+            src: item.image,
+            alt: item.name,
+            class: "w-full h-full object-contain"
+          }, null, 8, _hoisted_41)]), _createElementVNode("h3", {
+            class: "text-lg font-bold mb-3 line-clamp-1",
+            title: item.name
+          }, _toDisplayString(item.name), 9, _hoisted_42), _createElementVNode("button", {
+            onClick: $event => (openModal('wishOld', item)),
+            class: "mt-auto w-full bg-yellow border-2 border-ink rounded-xl py-2 font-bold btn-cute"
+          }, "我要許願", 8, _hoisted_43)]))
+        }), 128))])]), _createElementVNode("div", null, [_cache[9] || (_cache[9] = _createElementVNode("h2", { class: "text-3xl font-bold mb-6 flex items-center gap-3 text-grayDark" }, [_createElementVNode("span", { class: "bg-grayDark w-4 h-8 rounded-full border-2 border-ink inline-block" }), _createTextVNode(" 絕版品 ")], -1)), _createElementVNode("div", _hoisted_44, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(obsoleteItems, (item) => {
+          return (_openBlock(), _createElementBlock("div", {
+            key: item.id,
+            class: "bg-grayDark border-3 border-ink rounded-3xl p-3 shadow-cute flex flex-col h-full text-white"
+          }, [_createElementVNode("div", _hoisted_45, [_createElementVNode("img", {
+            src: item.image,
+            alt: item.name,
+            class: "w-full h-full object-contain"
+          }, null, 8, _hoisted_46), _cache[7] || (_cache[7] = _createElementVNode("div", { class: "absolute inset-0 flex items-center justify-center pointer-events-none" }, [_createElementVNode("span", { class: "text-lg font-black rotate-12 bg-grayDark/90 text-white px-3 py-1 border-2 border-white rounded-xl shadow-cute-sm" }, "絕版")], -1))]), _createElementVNode("h3", {
+            class: "text-lg font-bold mb-1 line-clamp-1",
+            title: item.name
+          }, _toDisplayString(item.name), 9, _hoisted_47), (obsoleteNote(item))
+            ? (_openBlock(), _createElementBlock("p", { key: 0, class: "text-sm font-bold text-yellow mt-auto" }, _toDisplayString(obsoleteNote(item)), 1))
+            : _createCommentVNode("", true)]))
+        }), 128))])])], 512), [[_vShow, activeTab === 'discontinued']]),
+        _withDirectives(_createElementVNode("div", null, [_createElementVNode("div", _hoisted_48, [_createElementVNode("div", _hoisted_49, [_createElementVNode("div", _hoisted_50, [_cache[10] || (_cache[10] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-yellow inline-block px-4 rounded-xl" }, "曾上架過周邊許願清單", -1)), _createElementVNode("button", {
+          onClick: exportWishesOldToExcel,
+          class: "bg-blue border-2 border-ink rounded-xl px-4 py-2 font-bold btn-cute text-sm"
+        }, "📥 下載 Excel", 8, _hoisted_51)]), (wishesOld.length === 0)
+          ? (_openBlock(), _createElementBlock("div", _hoisted_52, "目前還沒有人許願喔！"))
+          : (_openBlock(), _createElementBlock("ul", _hoisted_53, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(wishesOld, (wish, index) => {
+              return (_openBlock(), _createElementBlock("li", {
+                key: index,
+                class: "bg-paper border-2 border-ink rounded-2xl p-3 flex justify-between items-center"
+              }, [_createElementVNode("div", null, [_createElementVNode("span", _hoisted_54, _toDisplayString(wish.person), 1), _cache[11] || (_cache[11] = _createTextVNode(" 許願了 ", -1)), _createElementVNode("span", _hoisted_55, _toDisplayString(wish.itemName), 1)]), _createElementVNode("div", _hoisted_56, _toDisplayString(wish.qty) + " 個", 1)]))
+            }), 128))]))]), _createElementVNode("div", _hoisted_57, [_createElementVNode("div", _hoisted_58, [_cache[12] || (_cache[12] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-green inline-block px-4 rounded-xl" }, "新周邊許願清單", -1)), _createElementVNode("button", {
+          onClick: exportWishesNewToExcel,
+          class: "bg-blue border-2 border-ink rounded-xl px-4 py-2 font-bold btn-cute text-sm"
+        }, "📥 下載 Excel", 8, _hoisted_59)]), _createElementVNode("div", _hoisted_60, [
+          _createElementVNode("div", _hoisted_61, [_createElementVNode("div", null, [_cache[13] || (_cache[13] = _createElementVNode("label", { class: "block font-bold mb-1" }, [_createTextVNode("夥伴名稱 "), _createElementVNode("span", { class: "text-red-500" }, "*")], -1)), _withDirectives(_createElementVNode("input", {
+            "onUpdate:modelValue": $event => ((formWishNew.person) = $event),
+            type: "text",
+            class: "w-full border-2 border-ink rounded-xl p-2 bg-white",
+            placeholder: "你的名字"
+          }, null, 8, _hoisted_62), [[_vModelText, formWishNew.person]])]), _createElementVNode("div", null, [_cache[14] || (_cache[14] = _createElementVNode("label", { class: "block font-bold mb-1" }, [_createTextVNode("新周邊名稱 "), _createElementVNode("span", { class: "text-red-500" }, "*")], -1)), _withDirectives(_createElementVNode("input", {
+            "onUpdate:modelValue": $event => ((formWishNew.itemName) = $event),
+            type: "text",
+            class: "w-full border-2 border-ink rounded-xl p-2 bg-white",
+            placeholder: "想要的酷東西"
+          }, null, 8, _hoisted_63), [[_vModelText, formWishNew.itemName]])])]),
+          _createElementVNode("div", _hoisted_64, [_cache[16] || (_cache[16] = _createElementVNode("label", { class: "block font-bold mb-1" }, [_createTextVNode("參考圖片 "), _createElementVNode("span", { class: "text-red-500" }, "*")], -1)), _createElementVNode("div", _hoisted_65, [_createElementVNode("label", _hoisted_66, [_cache[15] || (_cache[15] = _createTextVNode(" 選擇檔案 ", -1)), _createElementVNode("input", {
+            type: "file",
+            class: "hidden",
+            accept: ".jpg,.png",
+            onChange: handleFileUpload
+          }, null, 40, _hoisted_67)]), _createElementVNode("span", _hoisted_68, _toDisplayString(formWishNew.fileName || '尚未選擇檔案'), 1)])]),
+          _createElementVNode("div", _hoisted_69, [_cache[17] || (_cache[17] = _createElementVNode("label", { class: "block font-bold mb-1" }, "補充說明 (選填)", -1)), _withDirectives(_createElementVNode("textarea", {
+            "onUpdate:modelValue": $event => ((formWishNew.notes) = $event),
+            rows: "2",
+            class: "w-full border-2 border-ink rounded-xl p-2 bg-white resize-none",
+            placeholder: "為什麼想要這個？"
+          }, null, 8, _hoisted_70), [[_vModelText, formWishNew.notes]])]),
+          errorWishNew
+            ? (_openBlock(), _createElementBlock("div", _hoisted_71, "⚠️ " + _toDisplayString(errorWishNew), 1))
+            : _createCommentVNode("", true),
+          _createElementVNode("button", {
+            onClick: submitWishNew,
+            class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-2 font-bold hover:bg-gray-800 transition"
+          }, "送出新許願", 8, _hoisted_72)
+        ]), _createElementVNode("div", _hoisted_73, [(wishesNew.length === 0)
+          ? (_openBlock(), _createElementBlock("div", _hoisted_74, "快來許願新酷東西吧！"))
+          : _createCommentVNode("", true), _createElementVNode("div", _hoisted_75, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(wishesNew, (wish, index) => {
+          return (_openBlock(), _createElementBlock("div", {
+            key: index,
+            class: "bg-paper border-2 border-ink rounded-2xl p-4 relative"
+          }, [
+            _createElementVNode("div", _hoisted_76, _toDisplayString(wish.itemName), 1),
+            _createElementVNode("div", _hoisted_77, [_cache[18] || (_cache[18] = _createTextVNode("許願人: ", -1)), _createElementVNode("span", _hoisted_78, _toDisplayString(wish.person), 1)]),
+            (wish.notes)
+              ? (_openBlock(), _createElementBlock("div", _hoisted_79, _toDisplayString(wish.notes), 1))
+              : _createCommentVNode("", true),
+            _createElementVNode("a", { href: wish.imageUrl || null, target: "_blank", rel: "noopener", class: "text-xs text-blue bg-blue/20 inline-block px-2 py-1 rounded-lg border border-blue hover:underline" }, "📁 " + _toDisplayString(wish.fileName), 9, ["href"])
+          ]))
+        }), 128))])])])])], 512), [[_vShow, activeTab === 'wishlist']]),
+        _withDirectives(_createElementVNode("div", null, [_createElementVNode("div", _hoisted_81, [_createElementVNode("div", _hoisted_82, [
+          _createElementVNode("div", null, [_cache[19] || (_cache[19] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "開始日期", -1)), _withDirectives(_createElementVNode("input", {
+            type: "date",
+            "onUpdate:modelValue": $event => ((filter.startDate) = $event),
+            class: "border-2 border-ink rounded-xl p-2 bg-white"
+          }, null, 8, _hoisted_83), [[_vModelText, filter.startDate]])]),
+          _createElementVNode("div", null, [_cache[20] || (_cache[20] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "結束日期", -1)), _withDirectives(_createElementVNode("input", {
+            type: "date",
+            "onUpdate:modelValue": $event => ((filter.endDate) = $event),
+            class: "border-2 border-ink rounded-xl p-2 bg-white"
+          }, null, 8, _hoisted_84), [[_vModelText, filter.endDate]])]),
+          _createElementVNode("div", _hoisted_85, [_cache[21] || (_cache[21] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "搜尋周邊名稱 / 夥伴 / 號碼牌", -1)), _withDirectives(_createElementVNode("input", {
+            type: "text",
+            "onUpdate:modelValue": $event => ((filter.keyword) = $event),
+            placeholder: "例如: 印章 或 26/11/06-1",
+            class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+          }, null, 8, _hoisted_86), [[_vModelText, filter.keyword]])]),
+          _createElementVNode("button", {
+            onClick: exportLogsToExcel,
+            class: "bg-blue border-2 border-ink rounded-xl px-6 py-2 font-bold btn-cute whitespace-nowrap h-[44px]"
+          }, " 📥 下載 Excel ", 8, _hoisted_87)
+        ]), _createElementVNode("div", _hoisted_88, [_createElementVNode("table", _hoisted_89, [_cache[23] || (_cache[23] = _createElementVNode("thead", null, [_createElementVNode("tr", { class: "bg-yellow border-b-2 border-ink text-sm" }, [
+          _createElementVNode("th", { class: "p-3 font-bold border-r-2 border-ink w-40" }, "日期時間"),
+          _createElementVNode("th", { class: "p-3 font-bold border-r-2 border-ink w-32" }, "號碼牌 / 動作"),
+          _createElementVNode("th", { class: "p-3 font-bold border-r-2 border-ink w-24" }, "夥伴"),
+          _createElementVNode("th", { class: "p-3 font-bold border-r-2 border-ink w-24" }, "縣市"),
+          _createElementVNode("th", { class: "p-3 font-bold border-r-2 border-ink" }, "備注說明"),
+          _createElementVNode("th", { class: "p-3 font-bold text-center w-28" }, "檢視明細")
+        ])], -1)), _createElementVNode("tbody", null, [(filteredLogs.length === 0)
+          ? (_openBlock(), _createElementBlock("tr", _hoisted_90, [...(_cache[22] || (_cache[22] = [_createElementVNode("td", {
+              colspan: "6",
+              class: "p-8 text-center font-bold text-gray-500"
+            }, "查無紀錄", -1)]))]))
+          : _createCommentVNode("", true), (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(filteredLogs, (log) => {
+          return (_openBlock(), _createElementBlock("tr", {
+            key: log.id,
+            class: "border-b border-ink/20 hover:bg-paper text-sm"
+          }, [
+            _createElementVNode("td", _hoisted_91, _toDisplayString(log.date), 1),
+            _createElementVNode("td", _hoisted_92, [(log.orderNumber)
+              ? (_openBlock(), _createElementBlock("span", _hoisted_93, _toDisplayString(log.orderNumber), 1))
+              : (_openBlock(), _createElementBlock("span", {
+                  key: 1,
+                  class: _normalizeClass(["text-gray-500 px-2 py-1 rounded-lg", {'bg-pink/30 text-pink-800': log.action === '歸還', 'bg-green/30 text-green-800': log.action === '補貨'}])
+                }, " [" + _toDisplayString(log.action) + "] ", 3))]),
+            _createElementVNode("td", _hoisted_94, _toDisplayString(log.person), 1),
+            _createElementVNode("td", _hoisted_95, _toDisplayString(log.location || '-'), 1),
+            _createElementVNode("td", {
+              class: "p-3 border-r-2 border-ink/20 text-gray-600 max-w-[200px] truncate",
+              title: log.details
+            }, _toDisplayString(log.details), 9, _hoisted_96),
+            _createElementVNode("td", _hoisted_97, [_createElementVNode("button", {
+              onClick: $event => (openModal('logDetails', null, log)),
+              class: "bg-white border-2 border-ink rounded-lg px-3 py-1 font-bold btn-cute text-sm hover:bg-yellow"
+            }, " 明細 (" + _toDisplayString(log.items.length) + ") ", 9, _hoisted_98)])
+          ]))
+        }), 128))])])])])], 512), [[_vShow, activeTab === 'logs']]),
+        _withDirectives(_createElementVNode("div", null, [_Vue.createVNode(NotesBoard)], 512), [[_vShow, activeTab === 'notes']])
+      ]),
+      (_openBlock(), _createBlock(_Teleport, { to: "body" }, [(modal.isOpen)
+        ? (_openBlock(), _createElementBlock("div", _hoisted_99, [
+            (modal.type === 'addToCart')
+              ? (_openBlock(), _createElementBlock("div", _hoisted_100, [
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition"
+                  }, "X", 8, _hoisted_101),
+                  _cache[26] || (_cache[26] = _createElementVNode("h3", { class: "text-2xl font-bold mb-2 bg-blue inline-block px-3 py-1 border-2 border-ink rounded-xl" }, "加入待領取清單", -1)),
+                  _createElementVNode("h4", _hoisted_102, _toDisplayString(activeItem.name), 1),
+                  _createElementVNode("div", _hoisted_103, "當前庫存: " + _toDisplayString(activeItem.stock), 1),
+                  _createElementVNode("div", _hoisted_104, [_createElementVNode("div", null, [_cache[25] || (_cache[25] = _createElementVNode("label", { class: "block font-bold mb-1" }, "本次欲領取數量：", -1)), _withDirectives(_createElementVNode("input", {
+                    type: "number",
+                    "onUpdate:modelValue": $event => ((tempCartQty) = $event),
+                    min: "1",
+                    max: activeItem.stock,
+                    class: "w-full border-2 border-ink rounded-xl p-3 text-lg font-bold text-center bg-white",
+                    placeholder: "輸入數量"
+                  }, null, 8, _hoisted_105), [[
+                    _vModelText,
+                    tempCartQty,
+                    void 0,
+                    { number: true }
+                  ]])]), (modal.error)
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_106, _toDisplayString(modal.error), 1))
+                    : _createCommentVNode("", true)]),
+                  _createElementVNode("button", {
+                    onClick: confirmAddToCart,
+                    class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold mt-6 hover:bg-gray-800 btn-cute text-lg"
+                  }, "確認加入 🛒", 8, _hoisted_107)
+                ]))
+              : _createCommentVNode("", true),
+            (modal.type === 'checkout')
+              ? (_openBlock(), _createElementBlock("div", _hoisted_108, [
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition z-10"
+                  }, "X", 8, _hoisted_109),
+                  _cache[32] || (_cache[32] = _createElementVNode("h3", { class: "text-2xl font-bold mb-4 bg-blue inline-block self-start px-3 py-1 border-2 border-ink rounded-xl" }, "🛒 待領取清單 (合併送出)", -1)),
+                  _createElementVNode("div", _hoisted_110, [(cart.length === 0)
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_111, "清單空空的，快去挑選吧！"))
+                    : (_openBlock(), _createElementBlock("div", _hoisted_112, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(cart, (cItem, index) => {
+                        return (_openBlock(), _createElementBlock("div", {
+                          key: index,
+                          class: "bg-white border-2 border-ink rounded-2xl p-3 flex items-center justify-between shadow-cute-sm"
+                        }, [_createElementVNode("div", _hoisted_113, [_createElementVNode("div", _hoisted_114, [_createElementVNode("img", {
+                          src: cItem.originalItem.image,
+                          class: "w-full h-full object-cover"
+                        }, null, 8, _hoisted_115)]), _createElementVNode("div", null, [_createElementVNode("div", {
+                          class: "font-bold text-lg leading-tight line-clamp-1",
+                          title: cItem.name
+                        }, _toDisplayString(cItem.name), 9, _hoisted_116), _createElementVNode("div", _hoisted_117, "庫存: " + _toDisplayString(cItem.originalItem.stock), 1)])]), _createElementVNode("div", _hoisted_118, [_withDirectives(_createElementVNode("input", {
+                          type: "number",
+                          "onUpdate:modelValue": $event => ((cItem.claimQty) = $event),
+                          min: "1",
+                          max: cItem.originalItem.stock,
+                          class: "w-16 border-2 border-ink rounded-lg p-1 text-center font-bold bg-yellow/20"
+                        }, null, 8, _hoisted_119), [[
+                          _vModelText,
+                          cItem.claimQty,
+                          void 0,
+                          { number: true }
+                        ]]), _createElementVNode("button", {
+                          onClick: $event => (removeFromCart(index)),
+                          class: "text-red-500 hover:text-red-700 font-bold text-xl px-2"
+                        }, "🗑️", 8, _hoisted_120)])]))
+                      }), 128))])), (cart.length > 0)
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_121, [_cache[31] || (_cache[31] = _createElementVNode("h4", { class: "font-bold text-lg mb-3 flex items-center gap-2" }, [_createTextVNode("📝 請填寫領取資訊 "), _createElementVNode("span", { class: "text-xs text-red-500 bg-red-100 px-2 py-1 rounded border border-red-200" }, "只需填一次即可為所有周邊產生專屬號碼牌！")], -1)), _createElementVNode("div", _hoisted_122, [
+                        _createElementVNode("div", null, [_cache[27] || (_cache[27] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "夥伴名稱 *", -1)), _withDirectives(_createElementVNode("input", {
+                          type: "text",
+                          "onUpdate:modelValue": $event => ((forms.checkout.person) = $event),
+                          class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                        }, null, 8, _hoisted_123), [[_vModelText, forms.checkout.person]])]),
+                        _createElementVNode("div", null, [_cache[28] || (_cache[28] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "縣市或小組名 *", -1)), _withDirectives(_createElementVNode("input", {
+                          type: "text",
+                          "onUpdate:modelValue": $event => ((forms.checkout.location) = $event),
+                          class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                        }, null, 8, _hoisted_124), [[_vModelText, forms.checkout.location]])]),
+                        _createElementVNode("div", null, [_cache[29] || (_cache[29] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "用途（活動/計畫/贈送對象） *", -1)), _withDirectives(_createElementVNode("input", {
+                          type: "text",
+                          "onUpdate:modelValue": $event => ((forms.checkout.purpose) = $event),
+                          class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                        }, null, 8, _hoisted_125), [[_vModelText, forms.checkout.purpose]])]),
+                        _createElementVNode("div", null, [_cache[30] || (_cache[30] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "預計使用日期 *", -1)), _withDirectives(_createElementVNode("input", {
+                          type: "date",
+                          "onUpdate:modelValue": $event => ((forms.checkout.useDate) = $event),
+                          class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                        }, null, 8, _hoisted_126), [[_vModelText, forms.checkout.useDate]])])
+                      ]), (modal.error)
+                        ? (_openBlock(), _createElementBlock("div", _hoisted_127, _toDisplayString(modal.error), 1))
+                        : _createCommentVNode("", true)]))
+                    : _createCommentVNode("", true)]),
+                  (cart.length > 0)
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_128, [_createElementVNode("button", {
+                        onClick: submitCart,
+                        class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-4 font-bold text-xl btn-cute"
+                      }, "確認無誤，送出產生號碼牌！", 8, _hoisted_129)]))
+                    : _createCommentVNode("", true)
+                ]))
+              : _createCommentVNode("", true),
+            (modal.type === 'return')
+              ? (_openBlock(), _createElementBlock("div", _hoisted_130, [
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition"
+                  }, "X", 8, _hoisted_131),
+                  _cache[41] || (_cache[41] = _createElementVNode("h3", { class: "text-2xl font-bold mb-4 bg-pink inline-block px-3 py-1 border-2 border-ink rounded-xl" }, "歸還周邊", -1)),
+                  _createElementVNode("div", _hoisted_132, [
+                    _createElementVNode("div", null, [_cache[33] || (_cache[33] = _createElementVNode("label", { class: "block font-bold mb-1" }, "負責夥伴名字 *", -1)), _withDirectives(_createElementVNode("input", {
+                      type: "text",
+                      "onUpdate:modelValue": $event => ((forms.return.person) = $event),
+                      class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                    }, null, 8, _hoisted_133), [[_vModelText, forms.return.person]])]),
+                    _createElementVNode("div", _hoisted_134, [_cache[38] || (_cache[38] = _createElementVNode("label", { class: "block font-bold mb-1" }, "歸還周邊名稱 *", -1)), _withDirectives(_createElementVNode("input", {
+                      type: "text",
+                      "onUpdate:modelValue": $event => ((forms.return.itemName) = $event),
+                      class: "w-full border-2 border-ink rounded-xl p-2 bg-white bg-pink/10"
+                    }, null, 8, _hoisted_135), [[_vModelText, forms.return.itemName]]), _createElementVNode("div", _hoisted_136, "⚠️ 請輸入完整周邊名稱：" + _toDisplayString(activeItem.name), 1)]),
+                    _createElementVNode("div", null, [_cache[39] || (_cache[39] = _createElementVNode("label", { class: "block font-bold mb-1" }, "歸還數量 *", -1)), _withDirectives(_createElementVNode("input", {
+                      type: "number",
+                      "onUpdate:modelValue": $event => ((forms.return.qty) = $event),
+                      min: "1",
+                      class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                    }, null, 8, _hoisted_138), [[_vModelText, forms.return.qty]])]),
+                    _createElementVNode("div", null, [_cache[40] || (_cache[40] = _createElementVNode("label", { class: "block font-bold mb-1" }, "歸還原因 *", -1)), _withDirectives(_createElementVNode("input", {
+                      type: "text",
+                      "onUpdate:modelValue": $event => ((forms.return.reason) = $event),
+                      class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                    }, null, 8, _hoisted_139), [[_vModelText, forms.return.reason]])]),
+                    (modal.error)
+                      ? (_openBlock(), _createElementBlock("div", _hoisted_140, _toDisplayString(modal.error), 1))
+                      : _createCommentVNode("", true)
+                  ]),
+                  _createElementVNode("button", {
+                    onClick: submitReturn,
+                    class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold mt-6 hover:bg-gray-800 btn-cute text-lg"
+                  }, "確認歸還送出", 8, _hoisted_141)
+                ]))
+              : _createCommentVNode("", true),
+            (modal.type === 'restock')
+              ? (_openBlock(), _createElementBlock("div", _hoisted_142, [
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition"
+                  }, "X", 8, _hoisted_143),
+                  _cache[45] || (_cache[45] = _createElementVNode("h3", { class: "text-2xl font-bold mb-4 bg-green inline-block px-3 py-1 border-2 border-ink rounded-xl" }, "補貨登記", -1)),
+                  _createElementVNode("div", _hoisted_144, [
+                    _createElementVNode("div", null, [_cache[42] || (_cache[42] = _createElementVNode("label", { class: "block font-bold mb-1" }, "負責夥伴名字 *", -1)), _withDirectives(_createElementVNode("input", {
+                      type: "text",
+                      "onUpdate:modelValue": $event => ((forms.restock.person) = $event),
+                      class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                    }, null, 8, _hoisted_145), [[_vModelText, forms.restock.person]])]),
+                    _createElementVNode("div", null, [_cache[43] || (_cache[43] = _createElementVNode("label", { class: "block font-bold mb-1" }, "補貨周邊名稱 *", -1)), _withDirectives(_createElementVNode("input", {
+                      type: "text",
+                      "onUpdate:modelValue": $event => ((forms.restock.itemName) = $event),
+                      class: "w-full border-2 border-ink rounded-xl p-2 bg-white bg-green/10"
+                    }, null, 8, _hoisted_146), [[_vModelText, forms.restock.itemName]]), _createElementVNode("div", _hoisted_147, "⚠️ 請輸入完整周邊名稱：" + _toDisplayString(activeItem.name), 1)]),
+                    _createElementVNode("div", null, [_cache[44] || (_cache[44] = _createElementVNode("label", { class: "block font-bold mb-1" }, "補貨數量 *", -1)), _withDirectives(_createElementVNode("input", {
+                      type: "number",
+                      "onUpdate:modelValue": $event => ((forms.restock.qty) = $event),
+                      min: "1",
+                      class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                    }, null, 8, _hoisted_148), [[_vModelText, forms.restock.qty]])]),
+                    (modal.error)
+                      ? (_openBlock(), _createElementBlock("div", _hoisted_149, _toDisplayString(modal.error), 1))
+                      : _createCommentVNode("", true)
+                  ]),
+                  _createElementVNode("button", {
+                    onClick: submitRestock,
+                    class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold mt-6 hover:bg-gray-800 btn-cute text-lg"
+                  }, "確認補貨送出", 8, _hoisted_150)
+                ]))
+              : _createCommentVNode("", true),
+            (modal.type === 'wishOld')
+              ? (_openBlock(), _createElementBlock("div", _hoisted_151, [
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition"
+                  }, "X", 8, _hoisted_152),
+                  _cache[48] || (_cache[48] = _createElementVNode("h3", { class: "text-2xl font-bold mb-2 bg-yellow inline-block px-3 py-1 border-2 border-ink rounded-xl" }, "我要許願", -1)),
+                  _createElementVNode("h4", _hoisted_153, "重新上架：" + _toDisplayString(activeItem.name), 1),
+                  _createElementVNode("div", _hoisted_154, [_createElementVNode("div", null, [_cache[46] || (_cache[46] = _createElementVNode("label", { class: "block font-bold mb-1" }, "許願人名字 *", -1)), _withDirectives(_createElementVNode("input", {
+                    type: "text",
+                    "onUpdate:modelValue": $event => ((forms.wishOld.person) = $event),
+                    class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                  }, null, 8, _hoisted_155), [[_vModelText, forms.wishOld.person]])]), _createElementVNode("div", null, [_cache[47] || (_cache[47] = _createElementVNode("label", { class: "block font-bold mb-1" }, "許願數量 *", -1)), _withDirectives(_createElementVNode("input", {
+                    type: "number",
+                    "onUpdate:modelValue": $event => ((forms.wishOld.qty) = $event),
+                    min: "1",
+                    class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
+                  }, null, 8, _hoisted_156), [[_vModelText, forms.wishOld.qty]])]), (modal.error)
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_157, _toDisplayString(modal.error), 1))
+                    : _createCommentVNode("", true)]),
+                  _createElementVNode("button", {
+                    onClick: submitWishOld,
+                    class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold mt-6 hover:bg-gray-800 btn-cute text-lg"
+                  }, "送出願望 ✨", 8, _hoisted_158)
+                ]))
+              : _createCommentVNode("", true),
+            (modal.type === 'success')
+              ? (_openBlock(), _createElementBlock("div", _hoisted_159, [
+                  _cache[49] || (_cache[49] = _createElementVNode("div", { class: "text-5xl mb-4" }, "🎉", -1)),
+                  _cache[50] || (_cache[50] = _createElementVNode("h3", { class: "text-2xl font-bold mb-2" }, "領取成功！", -1)),
+                  _cache[51] || (_cache[51] = _createElementVNode("p", { class: "font-bold text-gray-600 mb-4" }, "您的專屬號碼牌為：", -1)),
+                  _createElementVNode("div", _hoisted_160, _toDisplayString(modal.orderNumber), 1),
+                  _cache[52] || (_cache[52] = _createElementVNode("p", { class: "text-sm text-gray-500 font-bold mb-6" }, "請憑號碼牌至紀錄頁面查詢或打包核對。", -1)),
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold hover:bg-gray-800 btn-cute text-lg"
+                  }, "好的，我知道了！", 8, _hoisted_161)
+                ]))
+              : _createCommentVNode("", true),
+            (modal.type === 'logDetails' && activeLog)
+              ? (_openBlock(), _createElementBlock("div", _hoisted_162, [
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition z-10"
+                  }, "X", 8, _hoisted_163),
+                  _cache[58] || (_cache[58] = _createElementVNode("h3", { class: "text-2xl font-bold mb-4 bg-yellow inline-block self-start px-3 py-1 border-2 border-ink rounded-xl" }, "📄 異動明細", -1)),
+                  _createElementVNode("div", _hoisted_164, [
+                    _createElementVNode("div", null, [_cache[53] || (_cache[53] = _createElementVNode("span", { class: "text-gray-500" }, "日期時間：", -1)), _createTextVNode(_toDisplayString(activeLog.date), 1)]),
+                    _createElementVNode("div", null, [_cache[54] || (_cache[54] = _createElementVNode("span", { class: "text-gray-500" }, "號碼牌/動作：", -1)), (activeLog.orderNumber)
+                      ? (_openBlock(), _createElementBlock("span", _hoisted_165, _toDisplayString(activeLog.orderNumber), 1))
+                      : (_openBlock(), _createElementBlock("span", _hoisted_166, "[" + _toDisplayString(activeLog.action) + "]", 1))]),
+                    _createElementVNode("div", null, [_cache[55] || (_cache[55] = _createElementVNode("span", { class: "text-gray-500" }, "夥伴：", -1)), _createTextVNode(_toDisplayString(activeLog.person), 1)]),
+                    _createElementVNode("div", null, [_cache[56] || (_cache[56] = _createElementVNode("span", { class: "text-gray-500" }, "備註：", -1)), _createTextVNode(_toDisplayString(activeLog.details), 1)])
+                  ]),
+                  _createElementVNode("div", _hoisted_167, [_createElementVNode("table", _hoisted_168, [_cache[57] || (_cache[57] = _createElementVNode("thead", null, [_createElementVNode("tr", { class: "bg-grayLight border-b-2 border-ink text-sm" }, [_createElementVNode("th", { class: "p-3 font-bold border-r-2 border-ink" }, "周邊名稱"), _createElementVNode("th", { class: "p-3 font-bold border-r-2 border-ink text-right" }, "異動數量"), _createElementVNode("th", { class: "p-3 font-bold text-right" }, "剩餘庫存")])], -1)), _createElementVNode("tbody", null, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(activeLog.items, (item, index) => {
+                    return (_openBlock(), _createElementBlock("tr", {
+                      key: index,
+                      class: "border-b border-ink/10 hover:bg-paper"
+                    }, [_createElementVNode("td", _hoisted_169, _toDisplayString(item.name), 1), _createElementVNode("td", { class: _normalizeClass(["p-3 border-r-2 border-ink/10 text-right font-bold text-base", (item.qtyChange < 0) ? 'text-red-500' : 'text-green-600']) }, _toDisplayString(item.qtyChange > 0 ? '+' : '') + _toDisplayString(item.qtyChange), 3), _createElementVNode("td", { class: _normalizeClass(["p-3 text-right font-bold text-base", {'text-red-600 bg-red-50': item.remainingStock <= 10}]) }, _toDisplayString(item.remainingStock), 3)]))
+                  }), 128))])])]),
+                  _createElementVNode("button", {
+                    onClick: closeModal,
+                    class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold mt-6 hover:bg-gray-800 btn-cute text-lg"
+                  }, "關閉明細", 8, _hoisted_170)
+                ]))
+              : _createCommentVNode("", true)
+          ]))
+        : _createCommentVNode("", true)]))
+    ], 64))
+  }
+}
+})(Vue);
+__appRender._rc = true;
+</script>
+<script>
+const { createApp, ref, reactive, computed, onMounted, h, markRaw, Teleport } = Vue;
+
+/* ───────── 設定 ───────── */
+
+// 每隔多久自動抓一次最新庫存（別人領取後，這裡也會跟著更新）
+const REFRESH_INTERVAL_MS = 60 * 1000;
+
+const CATEGORIES = ['上架', '加贈', '下架', '絕版', '配額'];
+
+// 絕版品卡片下方的備註（用周邊編號對應）：沒列在這裡的顯示「2B員購頁面已下架」，空字串就不顯示
+const OBSOLETE_NOTES = {
+    'd-4': '如果要訂閱舊版的筆記本，數量需要2,000以上，2B才會叫貨', // 麵包店筆記本
+    'o-4': '如果要訂閱舊版的筆記本，數量需要2,000以上，2B才會叫貨', // 珍奶筆記本
+    'o-5': '如果要訂閱舊版的筆記本，數量需要2,000以上，2B才會叫貨', // 藍星筆記本
+    'm-20': '如果要訂閱舊版的筆記本，數量需要2,000以上，2B才會叫貨', // 卡牌筆記本
+    'b-0': '', // 資料夾（TLD製作平價版）
+};
+const obsoleteNote = item => Object.prototype.hasOwnProperty.call(OBSOLETE_NOTES, item.id)
+    ? OBSOLETE_NOTES[item.id]
+    : '2B員購頁面已下架';
+
+/* ───────── 共用資料：主畫面和管理面板都讀這裡 ───────── */
+
+const allItems = ref([]);
+const logs = ref([]);
+const wishesOld = ref([]);
+const wishesNew = ref([]);
+const quotas = ref([]); // 依申請配額領取的配額名單（已領、剩餘由試算表算好）
+const feedbacks = ref([]); // 夥伴測試意見回饋，新的在前
+const notices = ref([]); // 試算表「公告」工作表：布告欄和周邊相關記事的文字
+const sync = reactive({ status: 'loading', error: '', saving: false, lastSync: '', adminConfigured: true });
+const admin = reactive({ password: readSession('adminPassword'), name: readSession('adminName') });
+
+function readSession(key) {
+    try { return sessionStorage.getItem(key) || ''; } catch (e) { return ''; }
+}
+
+function writeSession(key, value) {
+    try {
+        if (value) sessionStorage.setItem(key, value);
+        else sessionStorage.removeItem(key);
+    } catch (e) {}
+}
+
+// 夥伴通行碼：輸入正確後記在這台裝置（localStorage），之後不用重新輸入
+const PASSCODE_KEY = 'partnerPasscode';
+
+function readLocal(key) {
+    try { return localStorage.getItem(key) || ''; } catch (e) { return ''; }
+}
+
+function writeLocal(key, value) {
+    try {
+        if (value) localStorage.setItem(key, value);
+        else localStorage.removeItem(key);
+    } catch (e) {}
+}
+
+const gate = reactive({ passcode: readLocal(PASSCODE_KEY), required: false, input: '', error: '', busy: false });
+
+// 試算表說通行碼不對（或還沒輸入）時，顯示輸入畫面
+function requirePasscode() {
+    const hadCode = !!gate.passcode;
+    gate.passcode = '';
+    writeLocal(PASSCODE_KEY, '');
+    gate.required = true;
+    gate.error = hadCode ? '通行碼不正確，可能已經更換了，請向管理者確認。' : '';
+}
+
+async function submitGate() {
+    const code = gate.input.trim();
+    if (!code) { gate.error = '請輸入通行碼'; return; }
+    gate.busy = true;
+    gate.error = '';
+    gate.passcode = code;
+    try {
+        const payload = await callApi('getState');
+        applyState(payload.state);
+        writeLocal(PASSCODE_KEY, code);
+        gate.required = false;
+        gate.input = '';
+    } catch (e) {
+        gate.error = e.needPasscode ? '通行碼不正確，請再試一次。' : e.message;
+    } finally {
+        gate.busy = false;
+    }
+}
+
+function lockAdmin() {
+    admin.password = '';
+    writeSession('adminPassword', '');
+}
+
+// 把試算表回傳的資料套用到畫面上。周邊沿用同一個物件，購物車和彈窗裡的周邊才會跟著更新庫存
+function applyState(state) {
+    const existing = new Map(allItems.value.map(item => [item.id, item]));
+    allItems.value = state.items.map(raw => {
+        const item = existing.get(raw.id);
+        return item ? Object.assign(item, raw) : raw;
+    });
+
+    // 試算表裡每個周邊一列，畫面上同一筆異動合併成一列
+    const grouped = new Map();
+    state.logs.forEach(row => {
+        if (!grouped.has(row.logId)) {
+            grouped.set(row.logId, {
+                id: row.logId, date: row.date, orderNumber: row.orderNumber, action: row.action,
+                person: row.person, location: row.location, details: row.details, items: []
+            });
+        }
+        grouped.get(row.logId).items.push({ name: row.itemName, qtyChange: row.qtyChange, remainingStock: row.remainingStock });
+    });
+    // 新的在前；系統啟用前補登的紀錄也會依日期排到正確的位置
+    logs.value = [...grouped.values()].reverse().sort((a, b) => b.date.localeCompare(a.date));
+    quotas.value = state.quotas || [];
+    wishesOld.value = [...state.wishesOld].reverse();
+    wishesNew.value = [...state.wishesNew].reverse();
+    feedbacks.value = [...(state.feedbacks || [])].reverse();
+    notices.value = state.notices || [];
+
+    const d = new Date();
+    sync.adminConfigured = state.adminConfigured;
+    sync.status = 'ready';
+    sync.error = '';
+    sync.lastSync = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// 放在 GitHub 時，網頁用這個網址讀寫試算表（Apps Script 部署的網頁應用程式網址）
+const API_URL = 'https://script.google.com/macros/s/AKfycbxvy37Rvs-ZS1rHtZHAA0bvDTNJ9VTdjeKpKrsdWWV7r8wUDzeYdwi19WwFTvckduen/exec';
+
+// 在 Apps Script 裡打開時用 google.script.run；其他地方（GitHub）用 fetch 呼叫 Code.gs 的 doPost
+function sendToSheet(fnName, args) {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+        return new Promise((resolve, reject) => {
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fnName](...args);
+        });
+    }
+    // text/plain 不會觸發跨網域預檢；credentials: 'omit' 不帶 Google 登入狀態，登入多個帳號也不會出錯
+    return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ fn: fnName, args }),
+        credentials: 'omit',
+        redirect: 'follow',
+    }).then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+    });
+}
+
+// 呼叫 Code.gs 裡的 getState / runAction，回傳的是 JSON 字串
+async function callApi(fnName, ...args) {
+    // 每次呼叫都帶上夥伴通行碼
+    if (fnName === 'getState') args = [gate.passcode];
+    if (fnName === 'runAction') args = [JSON.stringify(Object.assign(JSON.parse(args[0]), { passcode: gate.passcode }))];
+    let payload;
+    try {
+        const text = await sendToSheet(fnName, args);
+        payload = JSON.parse(text);
+    } catch (e) {
+        throw new Error('連不上試算表，請確認網路後重新整理頁面（' + ((e && e.message) || e) + '）');
+    }
+    if (!payload.ok) {
+        if (payload.needPasscode) requirePasscode();
+        const err = new Error(payload.error || '試算表回傳錯誤');
+        err.state = payload.state;
+        err.needPasscode = !!payload.needPasscode;
+        throw err;
+    }
+    return payload;
+}
+
+// 寫入進行中或剛寫完時，比較早送出的讀取結果已經過時，不能拿來蓋掉畫面
+let writeEpoch = 0;
+
+async function refresh() {
+    if (sync.saving || gate.required) return; // 等夥伴輸入通行碼後再讀
+    const epoch = writeEpoch;
+    try {
+        const payload = await callApi('getState');
+        if (epoch === writeEpoch && !sync.saving) applyState(payload.state);
+    } catch (e) {
+        if (e.needPasscode) return;
+        sync.status = 'error';
+        sync.error = e.message;
+    }
+}
+
+async function save(action, data, { asAdmin = false } = {}) {
+    if (asAdmin && !admin.password) throw new Error('這個動作需要管理者權限：請先點左下角「🔧 管理」輸入密碼');
+    const body = { action, data };
+    if (asAdmin) body.adminPassword = admin.password;
+    sync.saving = true;
+    writeEpoch++;
+    try {
+        const payload = await callApi('runAction', JSON.stringify(body));
+        applyState(payload.state);
+        return payload.result;
+    } catch (e) {
+        if (e.state) applyState(e.state);
+        if (e.message === '管理者密碼不正確') lockAdmin();
+        throw e;
+    } finally {
+        sync.saving = false;
+        writeEpoch++;
+    }
+}
+
+// 上傳前先把圖片縮到最長邊 1200px，避免檔案太大
+function readImageForUpload(file, maxSize = 1200) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext('2d');
+            const keepPng = file.type === 'image/png';
+            if (!keepPng) {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            const mimeType = keepPng ? 'image/png' : 'image/jpeg';
+            resolve({ mimeType, base64: canvas.toDataURL(mimeType, 0.85).split(',')[1] });
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('讀不到這張圖片，請換一張 JPG 或 PNG'));
+        };
+        img.src = url;
+    });
+}
+
+/* ───────── 共用的畫面元件樣式 ───────── */
+
+const btnCls = 'border-2 border-ink rounded-xl px-3 py-1 font-bold btn-cute';
+const inputCls = 'w-full border-2 border-ink rounded-xl p-2 bg-white';
+const errorCls = 'text-red-500 font-bold bg-red-100 p-2 rounded-xl border border-red-500';
+const closeBtnCls = 'absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition z-10';
+const submitBtnCls = 'w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold mt-6 hover:bg-gray-800 btn-cute text-lg';
+
+const field = (label, control) => h('label', { class: 'block' }, [
+    h('span', { class: 'block font-bold mb-1 text-sm' }, label),
+    control
+]);
+
+/* ───────── 布告欄、周邊相關記事：文字存在試算表「公告」工作表，輸入通行碼後才讀取 ───────── */
+
+// 文字裡的網址變成可以點的連結
+const URL_RE = /(https?:\/\/[^\s，。、；！？）」』]+)/g;
+const linkify = text => String(text).split(URL_RE).map((part, i) => (i % 2
+    ? h('a', { href: part, target: '_blank', rel: 'noopener', class: 'underline decoration-pink decoration-2 underline-offset-4 break-all hover:text-pink' }, part)
+    : part));
+
+// 同一個位置的列依序整理成：段落、置中、列點（條列＋底下的小條列）、日期卡片（周邊相關記事）
+function noticeBlocks(place) {
+    const blocks = [];
+    let card = null;
+    notices.value.filter(n => n.place === place).forEach(n => {
+        const style = n.style || '段落';
+        if (style === '日期') {
+            card = { type: 'date', text: n.text, blocks: [] };
+            blocks.push(card);
+            return;
+        }
+        const target = card ? card.blocks : blocks;
+        if (style === '條列' || style === '小條列') {
+            let list = target[target.length - 1];
+            if (!list || list.type !== 'list') { list = { type: 'list', items: [] }; target.push(list); }
+            if (style === '小條列' && list.items.length) list.items[list.items.length - 1].sub.push(n.text);
+            else list.items.push({ text: n.text, sub: [] });
+            return;
+        }
+        target.push({ type: style === '置中' ? 'center' : 'p', text: n.text });
+    });
+    return blocks;
+}
+
+// 列點本身已經寫了「1.」這類編號時，不再加圓點
+const numbered = text => /^\d+\s*[.．、]/.test(text);
+
+const bulletinBody = blocks => h('div', { class: 'space-y-4 font-bold text-ink' }, blocks.map(b => {
+    if (b.type === 'list') {
+        return h('div', { class: 'bg-paper border-2 border-ink rounded-xl p-4 ml-6 sm:ml-8 inline-block shadow-cute-sm' }, [
+            h('ul', { class: 'list-disc list-inside space-y-2 text-ink marker:text-pink' }, b.items.map(it =>
+                h('li', { class: numbered(it.text) ? 'list-none' : '' }, linkify(it.text))))
+        ]);
+    }
+    if (b.type === 'date') return h('p', null, linkify(b.text));
+    return h('p', { class: b.type === 'center' ? 'text-center pt-2' : '' }, linkify(b.text));
+}));
+
+const noticeBoard = place => markRaw({
+    setup() {
+        return () => {
+            const blocks = noticeBlocks(place);
+            if (!blocks.length) return null;
+            return h('div', { class: 'max-w-4xl mx-auto bg-white border-3 border-ink rounded-3xl p-6 shadow-cute mb-12 relative' }, [
+                h('div', { class: 'absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-8 bg-blue/70 border-2 border-ink opacity-90 -rotate-2' }),
+                h('h2', { class: 'text-2xl font-bold mb-5 text-center flex items-center justify-center gap-2 pt-2' }, '✿ 布告欄 ✿'),
+                bulletinBody(blocks)
+            ]);
+        };
+    }
+});
+
+const ShelfBulletin = noticeBoard('上架布告欄');
+const OffShelfBulletin = noticeBoard('下架布告欄');
+
+const DATE_COLORS = ['bg-yellow', 'bg-pink', 'bg-blue', 'bg-green'];
+
+const notesList = items => h('ul', { class: 'list-disc list-inside space-y-2' }, items.map(it => h('li', null, [
+    ...linkify(it.text),
+    it.sub.length
+        ? h('ul', { class: 'pl-8 pt-2 mt-1 space-y-2 text-gray-700 bg-white/50 rounded-xl p-3 border border-ink/20' }, it.sub.map(s => h('li', null, linkify(s))))
+        : null
+])));
+
+const notesBlock = b => (b.type === 'list'
+    ? notesList(b.items)
+    : h('p', { class: b.type === 'center' ? 'text-center' : '' }, linkify(b.text)));
+
+const NotesBoard = markRaw({
+    setup() {
+        return () => {
+            const blocks = noticeBlocks('周邊相關記事');
+            let cardIndex = 0;
+            return h('div', null, [
+                h('h2', { class: 'text-3xl font-bold mb-6 flex items-center gap-3' }, [
+                    h('span', { class: 'bg-blue w-4 h-8 rounded-full border-2 border-ink inline-block' }),
+                    '周邊相關記事'
+                ]),
+                h('div', { class: 'bg-white border-3 border-ink rounded-3xl p-8 shadow-cute' }, blocks.length
+                    ? h('div', { class: 'space-y-6' }, blocks.map(b => b.type === 'date'
+                        ? h('div', { class: 'bg-paper border-2 border-ink rounded-2xl p-5 relative' }, [
+                            h('div', { class: 'absolute -top-3 left-4 ' + DATE_COLORS[cardIndex++ % DATE_COLORS.length] + ' border-2 border-ink px-3 py-1 rounded-xl font-bold shadow-cute-sm' }, b.text),
+                            h('div', { class: 'mt-4 font-bold text-ink text-lg space-y-3' }, b.blocks.map(notesBlock))
+                        ])
+                        : h('div', { class: 'font-bold text-ink text-lg' }, [notesBlock(b)])))
+                    : h('p', { class: 'font-bold text-gray-500' }, '目前沒有記事。'))
+            ]);
+        };
+    }
+});
+
+/* ───────── 手機、平板的分頁選單（寬度不到 1024）：只顯示目前分頁和 ☰，點開才列出全部分頁 ───────── */
+
+const activeTab = ref('current');
+const TABS = [
+    { key: 'current', label: '目前上架周邊', color: 'bg-yellow' },
+    { key: 'discontinued', label: '已下架周邊', color: 'bg-pink' },
+    { key: 'wishlist', label: '許願池', color: 'bg-blue' },
+    { key: 'logs', label: '出入庫紀錄', color: 'bg-green' },
+    { key: 'notes', label: '周邊相關記事', color: 'bg-yellow' },
+    { key: 'feedback', label: '夥伴測試意見回饋表', color: 'bg-pink' },
+];
+
+const MobileNav = markRaw({
+    setup() {
+        const open = ref(false);
+        const choose = key => {
+            activeTab.value = key;
+            open.value = false;
+            window.scrollTo(0, 0);
+        };
+        onMounted(() => document.addEventListener('keydown', e => { if (e.key === 'Escape') open.value = false; }));
+
+        const tabCls = 'px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg';
+        return () => {
+            const current = TABS.find(t => t.key === activeTab.value) || TABS[0];
+            return h('div', { class: 'lg:hidden relative' }, [
+                open.value ? h('div', { class: 'fixed inset-0 bg-ink/30', onClick: () => { open.value = false; } }) : null,
+                h('div', { class: 'relative flex items-center justify-between gap-3 px-4 py-3 bg-paper' }, [
+                    h('span', { class: tabCls + ' shadow-cute truncate ' + current.color }, current.label),
+                    h('button', {
+                        type: 'button',
+                        'aria-label': open.value ? '關閉選單' : '打開選單',
+                        'aria-expanded': String(open.value),
+                        class: 'w-12 h-12 shrink-0 rounded-2xl border-3 border-ink bg-white shadow-cute-sm btn-cute flex flex-col items-center justify-center gap-[5px]',
+                        onClick: () => { open.value = !open.value; }
+                    }, open.value
+                        ? h('span', { class: 'text-2xl font-bold leading-none' }, '✕')
+                        : [0, 1, 2].map(() => h('span', { class: 'block w-6 h-[3px] rounded-full bg-ink' })))
+                ]),
+                open.value
+                    ? h('div', { class: 'absolute left-0 right-0 top-full bg-paper border-b-3 border-ink shadow-sm px-4 pt-3 pb-4 space-y-3' },
+                        TABS.map(t => h('button', {
+                            type: 'button',
+                            class: 'w-full text-left btn-cute ' + tabCls + ' ' + (t.key === activeTab.value ? t.color + ' shadow-cute' : 'bg-white'),
+                            onClick: () => choose(t.key)
+                        }, t.label)))
+                    : null
+            ]);
+        };
+    }
+});
+
+/* ───────── 夥伴測試意見回饋表：名稱可以不填（顯示「匿名」），送出後列在下方 ───────── */
+
+const FeedbackSection = markRaw({
+    setup() {
+        const form = reactive({ person: '', message: '', error: '', done: false });
+        const submit = async () => {
+            if (sync.saving) return;
+            form.error = '';
+            form.done = false;
+            if (!form.message.trim()) { form.error = '請填寫「意見」'; return; }
+            try {
+                await save('feedback', { person: form.person.trim(), message: form.message.trim() });
+                form.message = '';
+                form.done = true;
+            } catch (e) {
+                form.error = e.message;
+            }
+        };
+
+        return () => {
+            if (activeTab.value !== 'feedback') return null;
+            const list = feedbacks.value;
+            return h('div', { class: 'max-w-4xl mx-auto' }, [
+                h('h2', { class: 'text-3xl font-bold mb-6 flex items-center gap-3' }, [
+                    h('span', { class: 'bg-pink w-4 h-8 rounded-full border-2 border-ink inline-block shrink-0' }),
+                    '夥伴測試意見回饋表'
+                ]),
+                h('div', { class: 'bg-white border-3 border-ink rounded-3xl p-6 shadow-cute mb-8' }, [
+                    h('p', { class: 'font-bold text-gray-600 mb-4' }, '試用時遇到的問題、覺得不好用的地方，或希望增加的功能，都可以寫在這裡。'),
+                    h('div', { class: 'space-y-4' }, [
+                        field('夥伴名稱（可以不填，不填會顯示「匿名」）', h('input', {
+                            type: 'text', class: inputCls, maxlength: 30, placeholder: '匿名',
+                            value: form.person, onInput: e => { form.person = e.target.value; }
+                        })),
+                        field('意見', h('textarea', {
+                            rows: 4, class: inputCls + ' resize-y', maxlength: 1000, placeholder: '想說的話都可以寫在這裡',
+                            value: form.message, onInput: e => { form.message = e.target.value; form.done = false; }
+                        })),
+                    ]),
+                    form.error ? h('div', { class: errorCls + ' mt-4' }, '⚠️ ' + form.error) : null,
+                    form.done ? h('div', { class: 'mt-4 font-bold bg-green/30 border-2 border-ink rounded-xl p-2 text-center' }, '✓ 已送出，謝謝你的意見！') : null,
+                    h('button', { type: 'button', class: submitBtnCls, disabled: sync.saving, onClick: submit }, sync.saving ? '送出中…' : '送出意見'),
+                ]),
+                h('div', { class: 'bg-white border-3 border-ink rounded-3xl p-6 shadow-cute' }, [
+                    h('h3', { class: 'text-xl font-bold mb-4' }, '大家的意見（' + list.length + '）'),
+                    list.length === 0
+                        ? h('p', { class: 'font-bold text-gray-500' }, '還沒有人留言，歡迎當第一個！')
+                        : h('ul', { class: 'list-disc pl-6 space-y-4 marker:text-pink' }, list.map((f, i) => h('li', { key: i, class: 'pl-1' }, [
+                            h('div', { class: 'font-bold whitespace-pre-wrap break-words' }, f.message),
+                            h('div', { class: 'text-sm text-gray-500 mt-1' }, f.person + '｜' + f.date)
+                        ])))
+                ])
+            ]);
+        };
+    }
+});
+
+/* ───────── 依申請配額領取（例如桌曆），顯示在「目前上架周邊」最上面 ───────── */
+
+const QuotaSection = markRaw({
+    setup() {
+        const quotaItems = computed(() => allItems.value.filter(item => item.category === '配額'));
+        const quotasOf = item => quotas.value.filter(q => q.itemId === item.id);
+        const sum = (list, key) => list.reduce((n, q) => n + q[key], 0);
+
+        // 領取或歸還的彈窗
+        const form = reactive({ open: false, mode: 'claim', item: null, quotaId: '', person: '', qty: '', reason: '', useDate: '', error: '', orderNumber: '' });
+        const selectedQuota = () => quotas.value.find(q => q.id === form.quotaId);
+
+        const openForm = (item, mode) => {
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            Object.assign(form, { open: true, mode, item, quotaId: '', person: '', qty: '', reason: '', useDate: today, error: '', orderNumber: '' });
+        };
+        const closeForm = () => { form.open = false; };
+
+        // 選了配額後，負責夥伴只有一位就直接帶入
+        const pickQuota = id => {
+            form.quotaId = id;
+            const q = selectedQuota();
+            form.person = q && q.partners.length === 1 ? q.partners[0] : '';
+        };
+
+        const submit = async () => {
+            if (sync.saving) return;
+            const q = selectedQuota();
+            const claim = form.mode === 'claim';
+            form.error = '';
+            if (!q || !form.person || !form.qty || !form.reason || (claim && !form.useDate)) { form.error = '請填寫所有必填欄位！'; return; }
+            const qty = Number(form.qty);
+            if (!Number.isInteger(qty) || qty <= 0) { form.error = '數量必須是大於 0 的整數！'; return; }
+            if (claim && qty > q.remaining) { form.error = `這筆配額只剩 ${q.remaining}，請調整數量`; return; }
+            if (claim && qty > form.item.stock) { form.error = `「${form.item.name}」庫存只剩 ${form.item.stock} 個，請調整數量`; return; }
+            if (!claim && qty > q.claimed) { form.error = `這筆配額目前只領了 ${q.claimed}，歸還數量不能比這個多`; return; }
+            try {
+                const result = await save(claim ? 'claimQuota' : 'returnQuota', {
+                    quotaId: q.id, person: form.person, qty, reason: form.reason, useDate: form.useDate
+                });
+                if (claim) form.orderNumber = result.orderNumber;
+                else closeForm();
+            } catch (e) {
+                form.error = e.message;
+            }
+        };
+
+        const quotaTable = item => {
+            const list = quotasOf(item);
+            if (!list.length) {
+                return h('div', { class: 'flex items-center justify-center text-center text-gray-500 font-bold p-8 border-2 border-dashed border-ink/30 rounded-2xl' },
+                    '還沒有配額：請到試算表的「配額」工作表新增');
+            }
+            const th = (text, cls = '') => h('th', { class: 'p-2 font-bold border-b-2 border-ink whitespace-nowrap ' + cls }, text);
+            const td = (text, cls = '') => h('td', { class: 'p-2 ' + cls }, text);
+            const remainingTotal = sum(list, 'remaining');
+            return h('div', null, [
+                h('div', { class: 'overflow-x-auto border-2 border-ink rounded-2xl' }, [
+                    h('table', { class: 'w-full text-left border-collapse text-sm min-w-[560px]' }, [
+                        h('thead', null, [h('tr', { class: 'bg-blue/40' }, [
+                            th('負責縣市'), th('負責夥伴'), th('用途'), th('預計', 'text-right'), th('已領', 'text-right'), th('剩餘', 'text-right')
+                        ])]),
+                        h('tbody', null, [
+                            ...list.map(q => h('tr', { key: q.id, class: 'border-b border-ink/20' }, [
+                                td(q.county, 'font-bold whitespace-nowrap'),
+                                td(q.partnerText, 'font-bold whitespace-nowrap'),
+                                td(q.purpose, 'text-gray-600'),
+                                td(q.planned, 'text-right'),
+                                td(q.claimed, 'text-right'),
+                                td(q.remaining, 'text-right font-black ' + (q.remaining > 0 ? 'text-ink' : 'text-gray-400'))
+                            ])),
+                            h('tr', { class: 'bg-yellow/30' }, [
+                                td('合計', 'font-bold'), td(''), td(''),
+                                td(sum(list, 'planned'), 'text-right font-bold'),
+                                td(sum(list, 'claimed'), 'text-right font-bold'),
+                                td(remainingTotal, 'text-right font-black')
+                            ])
+                        ])
+                    ])
+                ]),
+                remainingTotal > item.stock
+                    ? h('p', { class: 'text-sm font-bold text-red-500 mt-2' }, `⚠️ 配額還有 ${remainingTotal} 沒領，但庫存只剩 ${item.stock}，數量對不起來，請確認。`)
+                    : null
+            ]);
+        };
+
+        const quotaCard = item => h('div', { key: item.id, class: 'bg-white border-3 border-ink rounded-3xl p-4 sm:p-6 shadow-cute mb-6' }, [
+            h('div', { class: 'grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6' }, [
+                h('div', { class: 'flex flex-col' }, [
+                    h('div', { class: 'aspect-square bg-blue/20 border-2 border-ink rounded-2xl mb-4 overflow-hidden flex items-center justify-center' }, [
+                        item.image
+                            ? h('img', { src: item.image, alt: item.name, class: 'w-full h-full object-contain' })
+                            : h('span', { class: 'text-6xl' }, '📅')
+                    ]),
+                    h('h3', { class: 'text-xl font-bold mb-1' }, item.name),
+                    h('div', { class: 'text-gray-600 mb-1 font-bold flex justify-between' }, [
+                        h('span', null, ['庫存: ', h('span', { class: item.stock <= 10 ? 'text-red-500 text-xl' : 'text-ink text-xl' }, item.stock)]),
+                        h('span', { class: 'text-sm self-end' }, '成本: $' + item.cost)
+                    ]),
+                    item.location ? h('div', { class: 'text-sm font-bold text-gray-500' }, '📍 ' + item.location) : null,
+                    h('div', { class: 'mt-4 grid grid-cols-2 gap-2' }, [
+                        h('button', { class: 'bg-blue border-2 border-ink rounded-xl py-2 font-bold btn-cute', onClick: () => openForm(item, 'claim') }, '依配額領取'),
+                        h('button', { class: 'bg-pink border-2 border-ink rounded-xl py-2 font-bold btn-cute', onClick: () => openForm(item, 'return') }, '歸還')
+                    ])
+                ]),
+                quotaTable(item)
+            ])
+        ]);
+
+        const successView = () => h('div', { class: 'bg-paper border-3 border-ink rounded-3xl p-8 shadow-cute w-full max-w-sm relative text-center' }, [
+            h('div', { class: 'text-5xl mb-4' }, '🎉'),
+            h('h3', { class: 'text-2xl font-bold mb-2' }, '領取成功！'),
+            h('p', { class: 'font-bold text-gray-600 mb-4' }, '您的專屬號碼牌為：'),
+            h('div', { class: 'bg-blue border-3 border-ink rounded-2xl py-4 px-6 text-2xl font-black text-ink mb-6 shadow-cute-inner' }, form.orderNumber),
+            h('button', { class: 'w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold hover:bg-gray-800 btn-cute text-lg', onClick: closeForm }, '好的，我知道了！')
+        ]);
+
+        const formView = () => {
+            const claim = form.mode === 'claim';
+            const q = selectedQuota();
+            const bind = key => ({ value: form[key], onInput: e => { form[key] = e.target.value; } });
+            return h('div', { class: 'bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-lg relative max-h-[90vh] overflow-y-auto' }, [
+                h('button', { class: closeBtnCls, onClick: closeForm }, 'X'),
+                h('h3', { class: ['text-2xl font-bold mb-2 inline-block px-3 py-1 border-2 border-ink rounded-xl', claim ? 'bg-blue' : 'bg-pink'] },
+                    claim ? '依配額領取' : '配額歸還'),
+                h('h4', { class: 'text-xl font-bold mb-2 mt-2' }, form.item.name),
+                h('div', { class: 'text-sm font-bold text-gray-500 mb-4 bg-white inline-block px-2 py-1 rounded border border-ink' }, '當前庫存: ' + form.item.stock),
+                h('div', { class: 'space-y-4' }, [
+                    field('選擇配額 *', h('select', { class: inputCls, value: form.quotaId, onChange: e => pickQuota(e.target.value) }, [
+                        h('option', { value: '' }, '請選擇（縣市｜夥伴｜用途）'),
+                        ...quotasOf(form.item).map(x => h('option', { value: x.id, disabled: claim ? x.remaining <= 0 : x.claimed <= 0 },
+                            `${x.county}｜${x.partnerText}｜${x.purpose}（${claim ? '剩 ' + x.remaining : '已領 ' + x.claimed}）`))
+                    ])),
+                    field(claim ? '申請人 *' : '歸還人 *', h('select', {
+                        class: inputCls, value: form.person, disabled: !q, onChange: e => { form.person = e.target.value; }
+                    }, [
+                        h('option', { value: '' }, q ? '請選擇' : '請先選擇配額'),
+                        ...(q ? q.partners.map(p => h('option', { value: p }, p)) : [])
+                    ])),
+                    field(claim ? '領取數量 *' : '歸還數量 *', h('input', { type: 'number', min: 1, class: inputCls, ...bind('qty') })),
+                    field(claim ? '領取原因 *' : '歸還原因 *', h('input', { class: inputCls, placeholder: claim ? '例如：教師研習後抽獎活動' : '例如：活動取消', ...bind('reason') })),
+                    claim ? field('領用日期 *', h('input', { type: 'date', class: inputCls, ...bind('useDate') })) : null,
+                    h('p', { class: 'text-xs font-bold text-gray-500' }, '只有配額名單上的夥伴可以領取；名單上沒有你的話，請先跟管理者確認。'),
+                    form.error ? h('div', { class: errorCls + ' text-center' }, form.error) : null
+                ]),
+                h('button', { class: submitBtnCls, onClick: submit }, sync.saving ? '儲存中…' : claim ? '確認領取' : '確認歸還')
+            ]);
+        };
+
+        return () => {
+            if (!quotaItems.value.length) return null;
+            return h('div', { class: 'mb-12' }, [
+                h('h2', { class: 'text-3xl font-bold mb-2 flex items-center gap-3' }, [
+                    h('span', { class: 'bg-blue w-4 h-8 rounded-full border-2 border-ink inline-block' }),
+                    ` 依申請配額領取 (${quotaItems.value.length}) `
+                ]),
+                h('p', { class: 'font-bold text-gray-600 mb-6' }, '這區的周邊是依照夥伴登記的數量採購的：只有配額名單上的夥伴可以領取，每筆配額最多領到登記的數量。'),
+                ...quotaItems.value.map(quotaCard),
+                form.open && form.item
+                    ? h(Teleport, { to: 'body' }, [
+                        h('div', { class: 'fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop' }, [
+                            form.orderNumber ? successView() : formView()
+                        ])
+                    ])
+                    : null
+            ]);
+        };
+    }
+});
+
+/* ───────── 主畫面 ───────── */
+
+createApp({
+    setup() {
+        // 上架、加贈的周邊數量變 0 時，依試算表的「售完後」顯示在已下架周邊或絕版品；補貨後會自動回來
+        const shownIn = item => (item.category === '上架' || item.category === '加贈') && item.stock <= 0
+            ? (item.soldOut === '下架' ? '下架' : '絕版')
+            : item.category;
+        const byCategory = category => computed(() => allItems.value.filter(item => shownIn(item) === category));
+        // 庫存低於 20 的排到最後，依數量由多到少（快沒了的在最下面）；其他照試算表的順序
+        const LOW_STOCK = 20;
+        const lowStockLast = category => computed(() => {
+            const list = allItems.value.filter(item => shownIn(item) === category);
+            return [
+                ...list.filter(item => item.stock >= LOW_STOCK),
+                ...list.filter(item => item.stock < LOW_STOCK).sort((a, b) => b.stock - a.stock)
+            ];
+        });
+        const mainItems = lowStockLast('上架');
+        const bonusItems = lowStockLast('加贈');
+        const discontinuedItems = byCategory('下架');
+        const obsoleteItems = byCategory('絕版');
+
+        // 購物車系統
+        const cart = ref([]);
+        const tempCartQty = ref(1);
+
+        const filter = ref({ startDate: '', endDate: '', keyword: '' });
+
+        const modal = ref({ isOpen: false, type: '', error: '', orderNumber: '' });
+        const activeItem = ref(null);
+        const activeLog = ref(null); // 用於記錄彈窗選中的那筆異動明細
+
+        const forms = ref({
+            checkout: { person: '', location: '', purpose: '', useDate: '' },
+            return: { person: '', itemName: '', qty: '', reason: '多領取周邊歸還' },
+            restock: { person: '', itemName: '', qty: '' },
+            wishOld: { person: '', qty: '' }
+        });
+        const formWishNew = ref({ person: '', itemName: '', fileName: '', notes: '' });
+        const errorWishNew = ref('');
+        let wishNewFile = null;
+
+        const openModal = (type, item = null, log = null) => {
+            modal.value = { isOpen: true, type, error: '', orderNumber: '' };
+            if(item) activeItem.value = item;
+            if(log) activeLog.value = log;
+
+            if(type === 'addToCart') tempCartQty.value = 1;
+            if(type === 'return') forms.value.return = { person: '', itemName: '', qty: '', reason: '多領取周邊歸還' };
+            if(type === 'restock') {
+                forms.value.restock = { person: '', itemName: '', qty: '' };
+                if(!admin.password) modal.value.error = '補貨需要管理者權限：請先點左下角「🔧 管理」輸入密碼';
+            }
+            if(type === 'wishOld') forms.value.wishOld = { person: '', qty: '' };
+        };
+
+        const closeModal = () => {
+            modal.value.isOpen = false;
+            activeItem.value = null;
+            activeLog.value = null;
+        };
+
+        const confirmAddToCart = () => {
+            const qty = parseInt(tempCartQty.value);
+            if(isNaN(qty) || qty <= 0) { modal.value.error = "數量必須大於 0！"; return; }
+            if(qty > activeItem.value.stock) { modal.value.error = "無法超過當前庫存數！"; return; }
+
+            const existing = cart.value.find(c => c.id === activeItem.value.id);
+            if(existing) {
+                if(existing.claimQty + qty > activeItem.value.stock) {
+                    modal.value.error = "加上購物車內數量已超過總庫存！"; return;
+                }
+                existing.claimQty += qty;
+            } else {
+                cart.value.push({
+                    id: activeItem.value.id,
+                    name: activeItem.value.name,
+                    claimQty: qty,
+                    originalItem: activeItem.value
+                });
+            }
+            closeModal();
+        };
+
+        const removeFromCart = (index) => {
+            cart.value.splice(index, 1);
+        };
+
+        // 送出購物車：試算表會再檢查一次庫存，並產生號碼牌
+        const submitCart = async () => {
+            if(sync.saving) return;
+            const f = forms.value.checkout;
+            if(!f.person || !f.location || !f.purpose || !f.useDate) {
+                modal.value.error = "請填寫所有必填資訊！";
+                return;
+            }
+
+            for(let cItem of cart.value) {
+                if(!Number.isInteger(cItem.claimQty) || cItem.claimQty <= 0 || cItem.claimQty > cItem.originalItem.stock) {
+                    modal.value.error = `「${cItem.name}」的數量不正確或庫存不足，請調整！`;
+                    return;
+                }
+            }
+
+            modal.value.error = '';
+            try {
+                const result = await save('checkout', {
+                    person: f.person, location: f.location, purpose: f.purpose, useDate: f.useDate,
+                    items: cart.value.map(c => ({ id: c.id, qty: c.claimQty }))
+                });
+                cart.value = [];
+                forms.value.checkout = { person: '', location: '', purpose: '', useDate: '' };
+                modal.value = { isOpen: true, type: 'success', error: '', orderNumber: result.orderNumber };
+            } catch (e) {
+                modal.value.error = e.message;
+            }
+        };
+
+        const submitReturn = async () => {
+            if(sync.saving) return;
+            const f = forms.value.return;
+            const item = activeItem.value;
+            if(!f.person || !f.itemName || !f.qty || !f.reason) { modal.value.error = "請填寫所有必填欄位！"; return; }
+            if(f.itemName !== item.name) { modal.value.error = "周邊名稱不符！"; return; }
+            const q = parseInt(f.qty);
+            if(isNaN(q) || q <= 0) { modal.value.error = "數量錯誤！"; return; }
+
+            modal.value.error = '';
+            try {
+                await save('returnItem', { person: f.person, itemId: item.id, qty: q, reason: f.reason });
+                closeModal();
+            } catch (e) {
+                modal.value.error = e.message;
+            }
+        };
+
+        const submitRestock = async () => {
+            if(sync.saving) return;
+            const f = forms.value.restock;
+            const item = activeItem.value;
+            if(!admin.password) { modal.value.error = '補貨需要管理者權限：請先點左下角「🔧 管理」輸入密碼'; return; }
+            if(!f.person || !f.itemName || !f.qty) { modal.value.error = "請填寫所有必填欄位！"; return; }
+            if(f.itemName !== item.name) { modal.value.error = "周邊名稱不符！"; return; }
+            const q = parseInt(f.qty);
+            if(isNaN(q) || q <= 0) { modal.value.error = "數量錯誤！"; return; }
+
+            modal.value.error = '';
+            try {
+                await save('restock', { person: f.person, itemId: item.id, qty: q }, { asAdmin: true });
+                closeModal();
+            } catch (e) {
+                modal.value.error = e.message;
+            }
+        };
+
+        const submitWishOld = async () => {
+            if(sync.saving) return;
+            const f = forms.value.wishOld;
+            if(!f.person || !f.qty) { modal.value.error = "請填寫所有必填欄位！"; return; }
+            const q = parseInt(f.qty);
+            if(isNaN(q) || q <= 0) { modal.value.error = "數量錯誤！"; return; }
+
+            modal.value.error = '';
+            try {
+                await save('wishOld', { person: f.person, itemId: activeItem.value.id, qty: q });
+                closeModal();
+            } catch (e) {
+                modal.value.error = e.message;
+            }
+        };
+
+        const handleFileUpload = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                wishNewFile = file;
+                formWishNew.value.fileName = file.name;
+            }
+            e.target.value = ''; // 讓同一個檔案可以重新選
+        };
+
+        const submitWishNew = async () => {
+            if(sync.saving) return;
+            const f = formWishNew.value;
+            errorWishNew.value = '';
+            if(!f.person || !f.itemName || !f.fileName || !wishNewFile) { errorWishNew.value = "請填寫所有欄位 (附圖必填)！"; return; }
+            try {
+                const imageUpload = await readImageForUpload(wishNewFile);
+                await save('wishNew', { person: f.person, itemName: f.itemName, notes: f.notes, fileName: f.fileName, imageUpload });
+                formWishNew.value = { person: '', itemName: '', fileName: '', notes: '' };
+                wishNewFile = null;
+            } catch (e) {
+                errorWishNew.value = e.message;
+            }
+        };
+
+        // 篩選邏輯，讓它可以搜到隱藏在 items 裡面的周邊名稱
+        const filteredLogs = computed(() => {
+            return logs.value.filter(log => {
+                let matchDate = true, matchKeyword = true;
+                if(filter.value.startDate) matchDate = matchDate && log.date.split(' ')[0] >= filter.value.startDate.replace(/-/g, '/');
+                if(filter.value.endDate) {
+                    const end = new Date(filter.value.endDate);
+                    end.setDate(end.getDate() + 1);
+                    const endStr = `${end.getFullYear()}/${String(end.getMonth()+1).padStart(2,'0')}/${String(end.getDate()).padStart(2,'0')}`;
+                    matchDate = matchDate && log.date.split(' ')[0] < endStr;
+                }
+                if(filter.value.keyword) {
+                    const kw = filter.value.keyword.toLowerCase();
+                    const matchItemName = log.items.some(item => item.name.toLowerCase().includes(kw));
+                    matchKeyword = matchItemName ||
+                                   log.person.toLowerCase().includes(kw) ||
+                                   (log.orderNumber && log.orderNumber.toLowerCase().includes(kw));
+                }
+                return matchDate && matchKeyword;
+            });
+        });
+
+        const exportWishesOldToExcel = () => {
+            if (wishesOld.value.length === 0) return;
+            const data = wishesOld.value.map(w => ({ '許願時間': w.date, '許願人': w.person, '周邊名稱': w.itemName, '許願數量': w.qty }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "舊品許願清單");
+            XLSX.writeFile(wb, `曾上架過周邊許願清單_${new Date().getTime()}.xlsx`);
+        };
+
+        const exportWishesNewToExcel = () => {
+            if (wishesNew.value.length === 0) return;
+            const data = wishesNew.value.map(w => ({ '許願時間': w.date, '許願人': w.person, '新周邊名稱': w.itemName, '參考圖片檔名': w.fileName, '參考圖片連結': w.imageUrl || '', '補充說明': w.notes || '' }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "新周邊許願清單");
+            XLSX.writeFile(wb, `新周邊許願清單_${new Date().getTime()}.xlsx`);
+        };
+
+        // 匯出 Excel (攤平顯示，方便總務後續管理)
+        const exportLogsToExcel = () => {
+            if(filteredLogs.value.length === 0) return;
+            const data = [];
+
+            // 將合併後的紀錄「展開」成單行輸出
+            filteredLogs.value.forEach(log => {
+                log.items.forEach(item => {
+                    data.push({
+                        '日期時間': log.date,
+                        '號碼牌/動作': log.orderNumber || `[${log.action}]`,
+                        '周邊名稱': item.name,
+                        '夥伴': log.person,
+                        '縣市': log.location || '-',
+                        '異動數量': item.qtyChange,
+                        '剩餘庫存': item.remainingStock,
+                        '備注說明': log.details
+                    });
+                });
+            });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "出入庫紀錄");
+            XLSX.writeFile(wb, `出入庫紀錄_${new Date().getTime()}.xlsx`);
+        };
+
+        onMounted(() => {
+            refresh();
+            setInterval(() => { if(document.visibilityState === 'visible') refresh(); }, REFRESH_INTERVAL_MS);
+            document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') refresh(); });
+        });
+
+        return {
+            activeTab, mainItems, bonusItems, discontinuedItems, obsoleteItems,
+            modal, activeItem, activeLog, forms, cart, tempCartQty,
+            openModal, closeModal,
+            confirmAddToCart, removeFromCart, submitCart,
+            submitReturn, submitRestock, submitWishOld,
+            wishesOld, wishesNew, formWishNew, errorWishNew, submitWishNew, handleFileUpload,
+            logs, filter, filteredLogs, exportLogsToExcel, exportWishesOldToExcel, exportWishesNewToExcel,
+            QuotaSection, MobileNav, FeedbackSection, obsoleteNote, ShelfBulletin, OffShelfBulletin, NotesBoard
+        };
+    },
+    render: __appRender
+}).mount('#app');
+
+/* ───────── 左下角：同步狀態與管理模式 ───────── */
+
+createApp({
+    setup() {
+        const open = ref(false);
+        const unlock = reactive({ name: admin.name, password: '', error: '', busy: false });
+        const tab = ref('上架');
+        const counting = reactive({ id: null, value: '', reason: '', error: '' });
+        const form = ref(null); // 新增或編輯中的周邊；null 時顯示清單
+        const formError = ref('');
+        const formImagePreview = ref('');
+        let formImageFile = null;
+
+        const itemsInTab = computed(() => allItems.value.filter(item => item.category === tab.value));
+        const countOf = category => allItems.value.filter(item => item.category === category).length;
+
+        const retry = () => { sync.status = 'loading'; refresh(); };
+
+        const setPreview = url => {
+            if (formImagePreview.value.startsWith('blob:')) URL.revokeObjectURL(formImagePreview.value);
+            formImagePreview.value = url;
+        };
+
+        const closeForm = () => { setPreview(''); form.value = null; };
+
+        const closePanel = () => { closeForm(); counting.id = null; open.value = false; };
+
+        const doUnlock = async () => {
+            unlock.error = '';
+            if (!unlock.name.trim() || !unlock.password) { unlock.error = '請填寫名字和密碼'; return; }
+            unlock.busy = true;
+            try {
+                // 密碼確認正確後才切換到管理畫面
+                const body = { action: 'verifyAdmin', data: {}, adminPassword: unlock.password };
+                const payload = await callApi('runAction', JSON.stringify(body));
+                applyState(payload.state);
+                admin.password = unlock.password;
+                admin.name = unlock.name.trim();
+                writeSession('adminPassword', admin.password);
+                writeSession('adminName', admin.name);
+                unlock.password = '';
+            } catch (e) {
+                unlock.error = e.message;
+            } finally {
+                unlock.busy = false;
+            }
+        };
+
+        const logout = () => { closeForm(); counting.id = null; lockAdmin(); };
+
+        const startCount = item => {
+            Object.assign(counting, { id: item.id, value: String(item.stock), reason: '', error: '' });
+        };
+
+        const submitCount = async item => {
+            if (sync.saving) return;
+            counting.error = '';
+            const n = Number(counting.value);
+            if (counting.value === '' || !Number.isInteger(n) || n < 0) { counting.error = '請輸入 0 或正整數'; return; }
+            try {
+                await save('adjustStock', { itemId: item.id, newStock: n, reason: counting.reason, person: admin.name }, { asAdmin: true });
+                counting.id = null;
+            } catch (e) {
+                counting.error = e.message;
+            }
+        };
+
+        const startEdit = item => {
+            counting.id = null;
+            formError.value = '';
+            formImageFile = null;
+            form.value = item
+                ? { id: item.id, name: item.name, category: item.category, cost: String(item.cost), location: item.location, stock: item.stock, soldOut: item.soldOut || '絕版' }
+                : { id: '', name: '', category: tab.value, cost: '', location: '', stock: '0', soldOut: '絕版' };
+            setPreview(item ? item.image : '');
+        };
+
+        const pickImage = e => {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            formImageFile = file;
+            setPreview(URL.createObjectURL(file));
+        };
+
+        const submitForm = async () => {
+            if (sync.saving) return;
+            const f = form.value;
+            formError.value = '';
+            if (!f.name.trim()) { formError.value = '請填寫周邊名稱'; return; }
+            if (!f.id && (!Number.isInteger(Number(f.stock)) || Number(f.stock) < 0 || f.stock === '')) {
+                formError.value = '初始庫存請輸入 0 或正整數'; return;
+            }
+            try {
+                const imageUpload = formImageFile ? await readImageForUpload(formImageFile) : null;
+                await save('saveItem', {
+                    id: f.id, name: f.name.trim(), category: f.category, cost: f.cost, location: f.location,
+                    soldOut: f.soldOut, stock: Number(f.stock), person: admin.name, imageUpload
+                }, { asAdmin: true });
+                tab.value = f.category;
+                closeForm();
+            } catch (e) {
+                formError.value = e.message;
+            }
+        };
+
+        const statusText = () => {
+            if (sync.saving) return '💾 儲存中…';
+            if (sync.status === 'loading') return '⏳ 載入中…';
+            if (sync.status === 'error') return '⚠️ 連線失敗';
+            return `✓ 已同步 ${sync.lastSync}`;
+        };
+
+        const statusDock = () => h('div', { class: 'fixed bottom-8 left-8 z-40 flex flex-col items-start gap-2' }, [
+            h('div', { class: 'bg-white border-2 border-ink rounded-xl px-3 py-1 text-sm font-bold shadow-cute-sm', title: sync.error }, statusText()),
+            sync.status === 'error' && allItems.value.length
+                ? h('button', { class: btnCls + ' bg-yellow text-sm', onClick: retry }, '重新連線')
+                : null,
+            h('button', {
+                class: 'bg-yellow border-3 border-ink rounded-2xl px-4 py-2 font-bold shadow-cute btn-cute',
+                onClick: () => { open.value = true; }
+            }, '🔧 管理')
+        ]);
+
+        // 第一次載入時蓋住空白的畫面
+        const loadingCover = () => {
+            if (allItems.value.length || sync.status === 'ready') return null;
+            const isError = sync.status === 'error';
+            return h('div', { class: 'fixed inset-0 z-30 flex items-center justify-center p-4 bg-paper/90' }, [
+                h('div', { class: 'bg-white border-3 border-ink rounded-3xl p-8 shadow-cute max-w-md w-full text-center' }, [
+                    h('div', { class: 'text-5xl mb-4' }, isError ? '⚠️' : '⏳'),
+                    h('p', { class: 'font-bold text-lg mb-4' }, isError ? sync.error : '正在從試算表載入庫存…'),
+                    isError ? h('button', { class: btnCls + ' bg-yellow px-6 py-2', onClick: retry }, '重新連線') : null
+                ])
+            ]);
+        };
+
+        const unlockView = () => h('div', { class: 'space-y-4 max-w-sm' }, [
+            sync.adminConfigured ? null : h('div', { class: errorCls }, '還沒設定管理者密碼：請到試算表上方選單「倉儲系統 → ② 設定管理者密碼」。'),
+            h('p', { class: 'font-bold text-gray-600' }, '解鎖後可以補貨、盤點、新增和編輯周邊。關掉這個分頁就會自動登出。'),
+            field('你的名字（會記在盤點、新增紀錄上） *', h('input', {
+                class: inputCls, value: unlock.name, onInput: e => { unlock.name = e.target.value; }
+            })),
+            field('管理者密碼 *', h('input', {
+                class: inputCls, type: 'password', value: unlock.password,
+                onInput: e => { unlock.password = e.target.value; },
+                onKeydown: e => { if (e.key === 'Enter') doUnlock(); }
+            })),
+            unlock.error ? h('div', { class: errorCls }, unlock.error) : null,
+            h('button', {
+                class: 'w-full bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold btn-cute',
+                disabled: unlock.busy, onClick: doUnlock
+            }, unlock.busy ? '確認中…' : '解鎖管理模式')
+        ]);
+
+        const countForm = item => h('div', { class: 'mt-3 pt-3 border-t-2 border-dashed border-ink/30 flex flex-wrap items-end gap-2' }, [
+            h('div', { class: 'font-bold text-sm pb-2' }, `目前 ${item.stock} 個 →`),
+            h('label', { class: 'block' }, [
+                h('span', { class: 'block text-xs font-bold mb-1' }, '實際數量'),
+                h('input', {
+                    type: 'number', min: 0, class: 'w-24 border-2 border-ink rounded-xl p-2 bg-white text-center font-bold',
+                    value: counting.value, onInput: e => { counting.value = e.target.value; }
+                })
+            ]),
+            h('label', { class: 'block flex-1 min-w-[160px]' }, [
+                h('span', { class: 'block text-xs font-bold mb-1' }, '原因（選填）'),
+                h('input', {
+                    class: inputCls, placeholder: '例如：月底盤點',
+                    value: counting.reason, onInput: e => { counting.reason = e.target.value; }
+                })
+            ]),
+            h('button', { class: btnCls + ' bg-ink text-white py-2', onClick: () => submitCount(item) }, sync.saving ? '儲存中…' : '確認'),
+            h('button', { class: btnCls + ' bg-white py-2', onClick: () => { counting.id = null; } }, '取消'),
+            counting.error ? h('div', { class: errorCls + ' w-full' }, counting.error) : null
+        ]);
+
+        const itemRow = item => h('div', { key: item.id, class: 'bg-white border-2 border-ink rounded-2xl p-3' }, [
+            // 手機寬度放不下時，庫存和按鈕會換到下一行
+            h('div', { class: 'flex flex-wrap items-center gap-3' }, [
+                h('img', { src: item.image, alt: '', class: 'w-12 h-12 object-contain border border-ink rounded-lg bg-gray-50 flex-shrink-0' }),
+                h('div', { class: 'flex-1 min-w-[8rem]' }, [
+                    h('div', { class: 'font-bold truncate', title: item.name }, item.name),
+                    h('div', { class: 'text-xs text-gray-500 font-bold truncate' },
+                        `成本 ${item.cost === '' || item.cost === '-' ? '-' : '$' + item.cost}　位置 ${item.location || '未設定'}` +
+                        (item.category === '上架' || item.category === '加贈' ? `　售完→${item.soldOut === '下架' ? '已下架' : '絕版品'}` : ''))
+                ]),
+                h('div', { class: 'flex items-center gap-2 ml-auto' }, [
+                    h('div', { class: ['text-lg font-black min-w-[3.5rem] text-right', item.stock <= 10 ? 'text-red-500' : ''] }, item.stock),
+                    h('button', { class: btnCls + ' bg-blue text-sm', onClick: () => startCount(item) }, '盤點'),
+                    h('button', { class: btnCls + ' bg-white text-sm', onClick: () => startEdit(item) }, '編輯')
+                ])
+            ]),
+            counting.id === item.id ? countForm(item) : null
+        ]);
+
+        const listView = () => h('div', { class: 'flex flex-col min-h-0 flex-1' }, [
+            h('div', { class: 'flex flex-wrap items-center gap-2 mb-3' }, [
+                ...CATEGORIES.map(c => h('button', {
+                    class: [btnCls, tab.value === c ? 'bg-yellow shadow-cute-sm' : 'bg-white'],
+                    onClick: () => { tab.value = c; counting.id = null; }
+                }, `${c} (${countOf(c)})`)),
+                h('div', { class: 'flex-1' }),
+                h('button', { class: btnCls + ' bg-green', onClick: () => startEdit(null) }, '＋ 新增周邊'),
+                h('button', { class: btnCls + ' bg-white', onClick: logout }, '登出管理')
+            ]),
+            h('p', { class: 'text-sm font-bold text-gray-600 mb-3' },
+                `登記人：${admin.name}｜庫存請用「盤點」修改，才會留下紀錄。名稱、成本、位置也可以直接在試算表改。`),
+            tab.value === '配額'
+                ? h('p', { class: 'text-sm font-bold text-blue-700 bg-blue/20 border border-blue rounded-xl p-2 mb-3' },
+                    '配額名單（負責縣市、夥伴、預計數量）請在試算表的「配額」工作表修改。')
+                : null,
+            h('div', { class: 'overflow-y-auto flex-1 space-y-2 pr-1' },
+                itemsInTab.value.length
+                    ? itemsInTab.value.map(itemRow)
+                    : [h('div', { class: 'text-center text-gray-500 font-bold py-8' }, '這個分類還沒有周邊')])
+        ]);
+
+        const formView = () => {
+            const f = form.value;
+            const bind = key => ({ value: f[key], onInput: e => { f[key] = e.target.value; } });
+            return h('div', { class: 'overflow-y-auto flex-1 pr-1' }, [
+                h('h4', { class: 'text-xl font-bold mb-4' }, f.id ? '編輯周邊' : '新增周邊'),
+                h('div', { class: 'grid grid-cols-1 sm:grid-cols-2 gap-4' }, [
+                    field('周邊名稱 *', h('input', { class: inputCls, ...bind('name') })),
+                    field('分類 *', h('select', {
+                        class: inputCls, value: f.category, onChange: e => { f.category = e.target.value; }
+                    }, CATEGORIES.map(c => h('option', { value: c }, c)))),
+                    field('成本', h('input', { class: inputCls, placeholder: '例如 50；沒有可填 -', ...bind('cost') })),
+                    field('位置（門牌）', h('input', { class: inputCls, placeholder: '例如 A-1', ...bind('location') })),
+                    f.category === '上架' || f.category === '加贈'
+                        ? field('數量變 0 時', h('select', {
+                            class: inputCls, value: f.soldOut, onChange: e => { f.soldOut = e.target.value; }
+                        }, [
+                            h('option', { value: '下架' }, '移到「已下架周邊」（夥伴可以許願）'),
+                            h('option', { value: '絕版' }, '移到「絕版品」')
+                        ]))
+                        : null,
+                    f.id
+                        ? h('div', { class: 'text-sm font-bold text-gray-600 self-end pb-2' }, `目前庫存 ${f.stock} 個（要改數量請用「盤點」）`)
+                        : field('初始庫存 *', h('input', { class: inputCls, type: 'number', min: 0, ...bind('stock') }))
+                ]),
+                h('div', { class: 'mt-4' }, [
+                    h('span', { class: 'block font-bold mb-1 text-sm' }, '圖片'),
+                    h('div', { class: 'flex items-center gap-3' }, [
+                        h('div', { class: 'w-24 h-24 border-2 border-ink rounded-xl bg-white overflow-hidden flex items-center justify-center flex-shrink-0' }, [
+                            formImagePreview.value
+                                ? h('img', { src: formImagePreview.value, alt: '', class: 'w-full h-full object-contain' })
+                                : h('span', { class: 'text-xs text-gray-400 font-bold' }, '沒有圖片')
+                        ]),
+                        h('label', { class: 'cursor-pointer bg-white border-2 border-ink rounded-xl px-4 py-2 font-bold hover:bg-gray-100' }, [
+                            formImagePreview.value ? '更換圖片' : '選擇圖片',
+                            h('input', { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', class: 'hidden', onChange: pickImage })
+                        ])
+                    ])
+                ]),
+                formError.value ? h('div', { class: errorCls + ' mt-4' }, formError.value) : null,
+                h('div', { class: 'flex gap-3 mt-6' }, [
+                    h('button', { class: 'flex-1 bg-ink text-white border-2 border-ink rounded-xl py-3 font-bold btn-cute', onClick: submitForm },
+                        sync.saving ? '儲存中…' : '儲存'),
+                    h('button', { class: 'bg-white border-2 border-ink rounded-xl px-6 py-3 font-bold btn-cute', onClick: closeForm }, '取消')
+                ])
+            ]);
+        };
+
+        const panel = () => h('div', { class: 'fixed inset-0 z-[60] flex items-center justify-center p-4 modal-backdrop' }, [
+            h('div', { class: 'bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute w-full max-w-4xl relative max-h-[90vh] flex flex-col' }, [
+                h('button', { class: closeBtnCls, onClick: closePanel }, 'X'),
+                h('h3', { class: 'text-2xl font-bold mb-4 bg-yellow inline-block self-start px-3 py-1 border-2 border-ink rounded-xl' }, '🔧 管理模式'),
+                !admin.password ? unlockView() : form.value ? formView() : listView()
+            ])
+        ]);
+
+        return () => [statusDock(), loadingCover(), open.value ? panel() : null];
+    }
+}).mount('#admin');
+
+/* ───────── 夥伴通行碼：需要時蓋住整個畫面，輸入正確才看得到內容 ───────── */
+
+createApp({
+    setup() {
+        return () => gate.required
+            ? h('div', { class: 'fixed inset-0 z-[100] bg-paper flex items-center justify-center p-4' }, [
+                h('form', {
+                    class: 'bg-white border-3 border-ink rounded-3xl p-8 shadow-cute max-w-sm w-full text-center',
+                    onSubmit: e => { e.preventDefault(); submitGate(); }
+                }, [
+                    h('div', { class: 'text-5xl mb-3' }, '🔒'),
+                    h('h1', { class: 'text-2xl font-bold mb-2' }, '2G 倉儲管理系統'),
+                    h('p', { class: 'font-bold text-gray-600 mb-5' }, '請輸入夥伴通行碼。通行碼請向管理者索取。'),
+                    h('input', {
+                        class: inputCls + ' text-center text-lg', type: 'password', placeholder: '夥伴通行碼',
+                        autocomplete: 'off', value: gate.input,
+                        onInput: e => { gate.input = e.target.value; },
+                        onVnodeMounted: vnode => vnode.el.focus()
+                    }),
+                    gate.error ? h('div', { class: errorCls + ' mt-3' }, gate.error) : null,
+                    h('button', { type: 'submit', class: submitBtnCls, disabled: gate.busy }, gate.busy ? '確認中…' : '進入'),
+                    h('p', { class: 'text-xs text-gray-500 mt-4' }, '輸入一次後，這台裝置會記住通行碼。')
+                ])
+            ])
+            : null;
+    }
+}).mount('#gate');
+</script>
+</body>
+</html>
