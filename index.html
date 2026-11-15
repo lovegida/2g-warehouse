@@ -1198,9 +1198,10 @@ function noticeBlocks(place) {
 // 列點本身已經寫了「1.」這類編號時，不再加圓點
 const numbered = text => /^\d+\s*[.．、]/.test(text);
 
-const bulletinBody = blocks => h('div', { class: 'space-y-4 font-bold text-ink' }, blocks.map(b => {
+// centered：整段置中，小框放在正中間、框裡的文字靠左（許願池布告欄）
+const bulletinBody = (blocks, centered = false) => h('div', { class: 'space-y-4 font-bold text-ink' + (centered ? ' text-center' : '') }, blocks.map(b => {
     if (b.type === 'list') {
-        return h('div', { class: 'bg-paper border-2 border-ink rounded-xl p-4 ml-6 sm:ml-8 inline-block shadow-cute-sm' }, [
+        return h('div', { class: 'bg-paper border-2 border-ink rounded-xl p-4 inline-block shadow-cute-sm ' + (centered ? 'text-left' : 'ml-6 sm:ml-8') }, [
             h('ul', { class: 'list-disc list-inside space-y-2 text-ink marker:text-pink' }, b.items.map(it =>
                 h('li', { class: numbered(it.text) ? 'list-none' : '' }, linkify(it.text))))
         ]);
@@ -1209,7 +1210,7 @@ const bulletinBody = blocks => h('div', { class: 'space-y-4 font-bold text-ink' 
     return h('p', { class: b.type === 'center' ? 'text-center pt-2' : '' }, linkify(b.text));
 }));
 
-const noticeBoard = place => markRaw({
+const noticeBoard = (place, { centered = false } = {}) => markRaw({
     setup() {
         return () => {
             const blocks = noticeBlocks(place);
@@ -1217,7 +1218,7 @@ const noticeBoard = place => markRaw({
             return h('div', { class: 'max-w-4xl mx-auto bg-white border-3 border-ink rounded-3xl p-6 shadow-cute mb-12 relative' }, [
                 h('div', { class: 'absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-8 bg-blue/70 border-2 border-ink opacity-90 -rotate-2' }),
                 h('h2', { class: 'text-2xl font-bold mb-5 text-center flex items-center justify-center gap-2 pt-2' }, '✿ 布告欄 ✿'),
-                bulletinBody(blocks)
+                bulletinBody(blocks, centered)
             ]);
         };
     }
@@ -1225,7 +1226,7 @@ const noticeBoard = place => markRaw({
 
 const ShelfBulletin = noticeBoard('上架布告欄');
 const OffShelfBulletin = noticeBoard('下架布告欄');
-const WishBulletin = noticeBoard('許願池布告欄');
+const WishBulletin = noticeBoard('許願池布告欄', { centered: true });
 
 const DATE_COLORS = ['bg-yellow', 'bg-pink', 'bg-blue', 'bg-green'];
 
