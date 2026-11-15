@@ -550,7 +550,7 @@ return function render(_ctx, _cache) {
             ? (_openBlock(), _createElementBlock("p", { key: 0, class: "text-sm font-bold text-yellow mt-auto" }, _toDisplayString(obsoleteNote(item)), 1))
             : _createCommentVNode("", true)]))
         }), 128))])])], 512), [[_vShow, activeTab === 'discontinued']]),
-        _withDirectives(_createElementVNode("div", null, [_createElementVNode("div", _hoisted_48, [_createElementVNode("div", _hoisted_49, [_createElementVNode("div", _hoisted_50, [_cache[10] || (_cache[10] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-yellow inline-block px-4 rounded-xl" }, "曾上架過周邊許願清單", -1)), _createElementVNode("button", {
+        _withDirectives(_createElementVNode("div", null, [_Vue.createVNode(WishBulletin), _createElementVNode("div", _hoisted_48, [_createElementVNode("div", _hoisted_49, [_createElementVNode("div", _hoisted_50, [_cache[10] || (_cache[10] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-yellow inline-block px-4 rounded-xl" }, "曾上架過周邊許願清單", -1)), _createElementVNode("button", {
           onClick: exportWishesOldToExcel,
           class: "bg-blue border-2 border-ink rounded-xl px-4 py-2 font-bold btn-cute text-sm"
         }, "📥 下載 Excel", 8, _hoisted_51)]), _Vue.createVNode(WishOldList)]), _createElementVNode("div", _hoisted_57, [_createElementVNode("div", _hoisted_58, [_cache[12] || (_cache[12] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-green inline-block px-4 rounded-xl" }, "新周邊許願清單", -1)), _createElementVNode("button", {
@@ -562,7 +562,7 @@ return function render(_ctx, _cache) {
             type: "text",
             class: "w-full border-2 border-ink rounded-xl p-2 bg-white",
             placeholder: "你的名字"
-          }, null, 8, _hoisted_62), [[_vModelText, formWishNew.person]])]), _createElementVNode("div", null, [_cache[14] || (_cache[14] = _createElementVNode("label", { class: "block font-bold mb-1" }, [_createTextVNode("新周邊名稱 "), _createElementVNode("span", { class: "text-red-500" }, "*")], -1)), _withDirectives(_createElementVNode("input", {
+          }, null, 8, _hoisted_62), [[_vModelText, formWishNew.person]]), _cache[62] || (_cache[62] = _createElementVNode("p", { class: "text-xs text-gray-500 font-bold mt-1" }, "如果不想填寫名字，可於欄位直接填寫：匿名", -1))]), _createElementVNode("div", null, [_cache[14] || (_cache[14] = _createElementVNode("label", { class: "block font-bold mb-1" }, [_createTextVNode("新周邊名稱 "), _createElementVNode("span", { class: "text-red-500" }, "*")], -1)), _withDirectives(_createElementVNode("input", {
             "onUpdate:modelValue": $event => ((formWishNew.itemName) = $event),
             type: "text",
             class: "w-full border-2 border-ink rounded-xl p-2 bg-white",
@@ -1225,6 +1225,7 @@ const noticeBoard = place => markRaw({
 
 const ShelfBulletin = noticeBoard('上架布告欄');
 const OffShelfBulletin = noticeBoard('下架布告欄');
+const WishBulletin = noticeBoard('許願池布告欄');
 
 const DATE_COLORS = ['bg-yellow', 'bg-pink', 'bg-blue', 'bg-green'];
 
@@ -1449,7 +1450,7 @@ const WishNewList = markRaw({
                         title: liked ? '再按一次取消認同' : '我也想要這個周邊',
                         class: 'border-2 border-ink rounded-full px-2 py-0.5 text-xs font-bold btn-cute ' + (liked ? 'bg-pink' : 'bg-white'),
                         onClick: () => toggleLike(w)
-                    }, liked ? '❤️ 已認同' : '🤍 認同'),
+                    }, liked ? '❤️ 已認同' : '認同'),
                     w.likes ? h('span', { class: 'text-sm leading-none', title: w.likes + ' 位夥伴認同' }, heartsText(w.likes)) : null
                 ])
             ];
@@ -1908,7 +1909,7 @@ createApp({
             wishesOld, wishesNew, formWishNew, errorWishNew, submitWishNew, handleFileUpload,
             logs, filter, filteredLogs, exportLogsToExcel, exportWishesOldToExcel, exportWishesNewToExcel,
             QuotaSection, MobileNav, FeedbackSection, obsoleteNote, ShelfBulletin, OffShelfBulletin, NotesBoard, openNote,
-            WishOldList, WishNewList
+            WishOldList, WishNewList, WishBulletin
         };
     },
     render: __appRender
