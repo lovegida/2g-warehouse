@@ -154,6 +154,8 @@
 <div id="admin"></div>
 <div id="gate"></div>
 <div id="busy"></div>
+<div id="note"></div>
+<div id="wish"></div>
 
 <script>
 /* 由 倉儲系統-原始檔.html 的 #app 樣板預先編譯（lib/build），執行時不需要 eval */
@@ -416,30 +418,30 @@ return function render(_ctx, _cache) {
 
     return (_openBlock(), _createElementBlock(_Fragment, null, [
       _createElementVNode("nav", _hoisted_1, [_Vue.createVNode(MobileNav), _createElementVNode("div", _hoisted_2, [_createElementVNode("div", _hoisted_3, [
-        _createElementVNode("button", {
-          onClick: $event => (activeTab = 'current'),
+        _createElementVNode("a", {
+          href: "#current",
           class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'current' ? 'bg-yellow shadow-cute' : 'bg-white hover:bg-yellow/50'])
-        }, " 目前上架周邊 ", 10, _hoisted_4),
-        _createElementVNode("button", {
-          onClick: $event => (activeTab = 'discontinued'),
+        }, " 目前上架周邊 ", 2),
+        _createElementVNode("a", {
+          href: "#discontinued",
           class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'discontinued' ? 'bg-pink shadow-cute' : 'bg-white hover:bg-pink/50'])
-        }, " 已下架周邊 ", 10, _hoisted_5),
-        _createElementVNode("button", {
-          onClick: $event => (activeTab = 'wishlist'),
+        }, " 已下架周邊 ", 2),
+        _createElementVNode("a", {
+          href: "#wishlist",
           class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'wishlist' ? 'bg-blue shadow-cute' : 'bg-white hover:bg-blue/50'])
-        }, " 許願池 ", 10, _hoisted_6),
-        _createElementVNode("button", {
-          onClick: $event => (activeTab = 'logs'),
+        }, " 許願池 ", 2),
+        _createElementVNode("a", {
+          href: "#logs",
           class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'logs' ? 'bg-green shadow-cute' : 'bg-white hover:bg-green/50'])
-        }, " 出入庫紀錄 ", 10, _hoisted_7),
-        _createElementVNode("button", {
-          onClick: $event => (activeTab = 'notes'),
+        }, " 出入庫紀錄 ", 2),
+        _createElementVNode("a", {
+          href: "#notes",
           class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'notes' ? 'bg-yellow shadow-cute' : 'bg-white hover:bg-yellow/50'])
-        }, " 周邊相關記事 ", 10, _hoisted_8),
-        _createElementVNode("button", {
-          onClick: $event => (activeTab = 'feedback'),
+        }, " 周邊相關記事 ", 2),
+        _createElementVNode("a", {
+          href: "#feedback",
           class: _normalizeClass(['px-4 py-2 rounded-2xl border-3 border-ink font-bold text-lg btn-cute', activeTab === 'feedback' ? 'bg-pink shadow-cute' : 'bg-white hover:bg-pink/50'])
-        }, " 夥伴測試意見回饋表 ", 10, ["onClick"])
+        }, " 夥伴測試意見回饋表 ", 2)
       ])])]),
       _withDirectives(_createElementVNode("button", {
         onClick: $event => (openModal('checkout')),
@@ -465,6 +467,13 @@ return function render(_ctx, _cache) {
               title: item.name
             }, _toDisplayString(item.name), 9, _hoisted_18),
             _createElementVNode("div", _hoisted_19, [_createElementVNode("span", null, [_cache[2] || (_cache[2] = _createTextVNode("庫存: ", -1)), _createElementVNode("span", { class: _normalizeClass({'text-red-500 text-xl': item.stock <= 10, 'text-ink text-xl': item.stock > 10}) }, _toDisplayString(item.stock), 3)]), _createElementVNode("span", _hoisted_20, "成本: $" + _toDisplayString(item.cost), 1)]),
+            (item.note)
+              ? (_openBlock(), _createElementBlock("button", {
+                  key: 0,
+                  onClick: $event => (openNote(item)),
+                  class: "mb-3 w-full bg-paper border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
+                }, "📝 說明", 8, ["onClick"]))
+              : _createCommentVNode("", true),
             _createElementVNode("div", _hoisted_21, [_createElementVNode("button", {
               onClick: $event => (openModal('addToCart', item)),
               class: "bg-blue border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm flex items-center justify-center gap-1"
@@ -492,6 +501,13 @@ return function render(_ctx, _cache) {
               title: item.name
             }, _toDisplayString(item.name), 9, _hoisted_30),
             _createElementVNode("div", _hoisted_31, [_createElementVNode("span", null, [_cache[4] || (_cache[4] = _createTextVNode("庫存: ", -1)), _createElementVNode("span", { class: _normalizeClass({'text-red-500 text-xl': item.stock <= 10, 'text-ink text-xl': item.stock > 10}) }, _toDisplayString(item.stock), 3)]), _createElementVNode("span", _hoisted_32, "成本: $" + _toDisplayString(item.cost), 1)]),
+            (item.note)
+              ? (_openBlock(), _createElementBlock("button", {
+                  key: 0,
+                  onClick: $event => (openNote(item)),
+                  class: "mb-3 w-full bg-paper border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
+                }, "📝 說明", 8, ["onClick"]))
+              : _createCommentVNode("", true),
             _createElementVNode("div", _hoisted_33, [_createElementVNode("button", {
               onClick: $event => (openModal('addToCart', item)),
               class: "bg-blue border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm flex items-center justify-center gap-1"
@@ -537,14 +553,7 @@ return function render(_ctx, _cache) {
         _withDirectives(_createElementVNode("div", null, [_createElementVNode("div", _hoisted_48, [_createElementVNode("div", _hoisted_49, [_createElementVNode("div", _hoisted_50, [_cache[10] || (_cache[10] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-yellow inline-block px-4 rounded-xl" }, "曾上架過周邊許願清單", -1)), _createElementVNode("button", {
           onClick: exportWishesOldToExcel,
           class: "bg-blue border-2 border-ink rounded-xl px-4 py-2 font-bold btn-cute text-sm"
-        }, "📥 下載 Excel", 8, _hoisted_51)]), (wishesOld.length === 0)
-          ? (_openBlock(), _createElementBlock("div", _hoisted_52, "目前還沒有人許願喔！"))
-          : (_openBlock(), _createElementBlock("ul", _hoisted_53, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(wishesOld, (wish, index) => {
-              return (_openBlock(), _createElementBlock("li", {
-                key: index,
-                class: "bg-paper border-2 border-ink rounded-2xl p-3 flex justify-between items-center"
-              }, [_createElementVNode("div", null, [_createElementVNode("span", _hoisted_54, _toDisplayString(wish.person), 1), _cache[11] || (_cache[11] = _createTextVNode(" 許願了 ", -1)), _createElementVNode("span", _hoisted_55, _toDisplayString(wish.itemName), 1)]), _createElementVNode("div", _hoisted_56, _toDisplayString(wish.qty) + " 個", 1)]))
-            }), 128))]))]), _createElementVNode("div", _hoisted_57, [_createElementVNode("div", _hoisted_58, [_cache[12] || (_cache[12] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-green inline-block px-4 rounded-xl" }, "新周邊許願清單", -1)), _createElementVNode("button", {
+        }, "📥 下載 Excel", 8, _hoisted_51)]), _Vue.createVNode(WishOldList)]), _createElementVNode("div", _hoisted_57, [_createElementVNode("div", _hoisted_58, [_cache[12] || (_cache[12] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-green inline-block px-4 rounded-xl" }, "新周邊許願清單", -1)), _createElementVNode("button", {
           onClick: exportWishesNewToExcel,
           class: "bg-blue border-2 border-ink rounded-xl px-4 py-2 font-bold btn-cute text-sm"
         }, "📥 下載 Excel", 8, _hoisted_59)]), _createElementVNode("div", _hoisted_60, [
@@ -578,21 +587,7 @@ return function render(_ctx, _cache) {
             onClick: submitWishNew,
             class: "w-full bg-ink text-white border-2 border-ink rounded-xl py-2 font-bold hover:bg-gray-800 transition"
           }, "送出新許願", 8, _hoisted_72)
-        ]), _createElementVNode("div", _hoisted_73, [(wishesNew.length === 0)
-          ? (_openBlock(), _createElementBlock("div", _hoisted_74, "快來許願新酷東西吧！"))
-          : _createCommentVNode("", true), _createElementVNode("div", _hoisted_75, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(wishesNew, (wish, index) => {
-          return (_openBlock(), _createElementBlock("div", {
-            key: index,
-            class: "bg-paper border-2 border-ink rounded-2xl p-4 relative"
-          }, [
-            _createElementVNode("div", _hoisted_76, _toDisplayString(wish.itemName), 1),
-            _createElementVNode("div", _hoisted_77, [_cache[18] || (_cache[18] = _createTextVNode("許願人: ", -1)), _createElementVNode("span", _hoisted_78, _toDisplayString(wish.person), 1)]),
-            (wish.notes)
-              ? (_openBlock(), _createElementBlock("div", _hoisted_79, _toDisplayString(wish.notes), 1))
-              : _createCommentVNode("", true),
-            _createElementVNode("a", { href: wish.imageUrl || null, target: "_blank", rel: "noopener", class: "text-xs text-blue bg-blue/20 inline-block px-2 py-1 rounded-lg border border-blue hover:underline" }, "📁 " + _toDisplayString(wish.fileName), 9, ["href"])
-          ]))
-        }), 128))])])])])], 512), [[_vShow, activeTab === 'wishlist']]),
+        ]), _createElementVNode("div", _hoisted_73, [_Vue.createVNode(WishNewList)])])])], 512), [[_vShow, activeTab === 'wishlist']]),
         _withDirectives(_createElementVNode("div", null, [_createElementVNode("div", _hoisted_81, [_createElementVNode("div", _hoisted_82, [
           _createElementVNode("div", null, [_cache[19] || (_cache[19] = _createElementVNode("label", { class: "block font-bold mb-1 text-sm" }, "開始日期", -1)), _withDirectives(_createElementVNode("input", {
             type: "date",
@@ -970,6 +965,10 @@ const loadingBadge = () => h('div', { class: 'loading-badge', role: 'status', 'a
 // 正在送出的動作數量（領取、歸還、許願、管理等）；大於 0 時顯示讀取中的徽章
 const busy = reactive({ count: 0 });
 
+// 周邊卡片的「📝 說明」：內容在試算表「周邊」工作表的「說明」欄
+const noteView = reactive({ item: null });
+const openNote = item => { noteView.item = item; };
+
 // 試算表說通行碼不對（或還沒輸入）時，顯示輸入畫面
 function requirePasscode() {
     const hadCode = !!gate.passcode;
@@ -1275,11 +1274,23 @@ const TABS = [
     { key: 'feedback', label: '夥伴測試意見回饋表', color: 'bg-pink' },
 ];
 
+// 每個分頁有自己的網址（例如 #logs）：分頁按鈕是連結，可以右鍵在新分頁開啟，也可以用瀏覽器的上一頁回到上一個分頁
+const TAB_KEYS = TABS.map(t => t.key);
+const tabFromHash = () => {
+    const key = decodeURIComponent(location.hash.slice(1));
+    return TAB_KEYS.includes(key) ? key : 'current';
+};
+activeTab.value = tabFromHash();
+window.addEventListener('hashchange', () => { activeTab.value = tabFromHash(); });
+
+// 一般點擊才收起選單；按著 ⌘／Ctrl／Shift 點是開新分頁，原本的頁面不動
+const isPlainClick = e => !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey);
+
 const MobileNav = markRaw({
     setup() {
         const open = ref(false);
-        const choose = key => {
-            activeTab.value = key;
+        const choose = e => {
+            if (!isPlainClick(e)) return;
             open.value = false;
             window.scrollTo(0, 0);
         };
@@ -1304,10 +1315,10 @@ const MobileNav = markRaw({
                 ]),
                 open.value
                     ? h('div', { class: 'absolute left-0 right-0 top-full bg-paper border-b-3 border-ink shadow-sm px-4 pt-3 pb-4 space-y-3' },
-                        TABS.map(t => h('button', {
-                            type: 'button',
-                            class: 'w-full text-left btn-cute ' + tabCls + ' ' + (t.key === activeTab.value ? t.color + ' shadow-cute' : 'bg-white'),
-                            onClick: () => choose(t.key)
+                        TABS.map(t => h('a', {
+                            href: '#' + t.key,
+                            class: 'block w-full text-left btn-cute ' + tabCls + ' ' + (t.key === activeTab.value ? t.color + ' shadow-cute' : 'bg-white'),
+                            onClick: choose
                         }, t.label)))
                     : null
             ]);
@@ -1369,6 +1380,80 @@ const FeedbackSection = markRaw({
                 ])
             ]);
         };
+    }
+});
+
+/* ───────── 許願池的兩份清單：日期｜許願內容｜明細；新周邊可以按「認同」 ───────── */
+
+// 這台裝置認同過哪些新周邊許願（再按一次可以取消）
+const LIKED_KEY = 'likedWishes';
+const likedWishes = reactive(new Set((() => {
+    try { return JSON.parse(readLocal(LIKED_KEY) || '[]'); } catch (e) { return []; }
+})()));
+const wishView = reactive({ kind: '', wish: null }); // 明細彈窗
+const wishDay = date => String(date || '').split(' ')[0] || '—';
+const heartsText = n => (n <= 10 ? '❤️'.repeat(n) : '❤️ × ' + n);
+
+async function toggleLike(wish) {
+    if (busy.count > 0) return;
+    const liked = likedWishes.has(wish.key);
+    try {
+        await save('likeWish', { key: wish.key, delta: liked ? -1 : 1 });
+        if (liked) likedWishes.delete(wish.key);
+        else likedWishes.add(wish.key);
+        writeLocal(LIKED_KEY, JSON.stringify([...likedWishes]));
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+// 手機上日期欄窄一點，讓許願內容有空間
+const WISH_GRID = 'grid grid-cols-[4.75rem_minmax(0,1fr)_auto] sm:grid-cols-[6.5rem_minmax(0,1fr)_auto] gap-2 sm:gap-3 px-2 sm:px-3 py-2 items-center';
+
+const wishTable = (rows, emptyText, kind, renderContent) => (rows.length
+    ? h('div', { class: 'border-2 border-ink rounded-2xl overflow-hidden bg-paper' }, [
+        h('div', { class: WISH_GRID + ' bg-ink/5 border-b-2 border-ink font-bold text-sm text-gray-600' }, [
+            h('div', null, '日期'), h('div', null, '許願內容'), h('div')
+        ]),
+        ...rows.map((w, i) => h('div', { key: (w.key || w.date) + '-' + i, class: WISH_GRID + (i ? ' border-t border-ink/20' : '') }, [
+            h('div', { class: 'text-xs sm:text-sm font-bold text-gray-600 whitespace-nowrap' }, wishDay(w.date)),
+            h('div', { class: 'font-bold break-words' }, renderContent(w)),
+            h('button', {
+                type: 'button',
+                class: 'bg-white border-2 border-ink rounded-xl px-3 py-1 font-bold btn-cute text-sm whitespace-nowrap',
+                onClick: () => { wishView.kind = kind; wishView.wish = w; }
+            }, '明細')
+        ]))
+    ])
+    : h('div', { class: 'text-center text-gray-500 font-bold py-8' }, emptyText));
+
+const WishOldList = markRaw({
+    setup() {
+        return () => wishTable(wishesOld.value, '目前還沒有人許願喔！', 'old', w => [
+            w.itemName,
+            h('span', { class: 'ml-2 text-sm text-gray-600 whitespace-nowrap' }, '× ' + w.qty + ' 個')
+        ]);
+    }
+});
+
+const WishNewList = markRaw({
+    setup() {
+        return () => wishTable(wishesNew.value, '快來許願新酷東西吧！', 'new', w => {
+            const liked = likedWishes.has(w.key);
+            return [
+                h('div', null, w.itemName),
+                h('div', { class: 'mt-1 flex flex-wrap items-center gap-2' }, [
+                    h('button', {
+                        type: 'button',
+                        'aria-pressed': String(liked),
+                        title: liked ? '再按一次取消認同' : '我也想要這個周邊',
+                        class: 'border-2 border-ink rounded-full px-2 py-0.5 text-xs font-bold btn-cute ' + (liked ? 'bg-pink' : 'bg-white'),
+                        onClick: () => toggleLike(w)
+                    }, liked ? '❤️ 已認同' : '🤍 認同'),
+                    w.likes ? h('span', { class: 'text-sm leading-none', title: w.likes + ' 位夥伴認同' }, heartsText(w.likes)) : null
+                ])
+            ];
+        });
     }
 });
 
@@ -1776,7 +1861,7 @@ createApp({
 
         const exportWishesNewToExcel = () => {
             if (wishesNew.value.length === 0) return;
-            const data = wishesNew.value.map(w => ({ '許願時間': w.date, '許願人': w.person, '新周邊名稱': w.itemName, '參考圖片檔名': w.fileName, '參考圖片連結': w.imageUrl || '', '補充說明': w.notes || '' }));
+            const data = wishesNew.value.map(w => ({ '許願時間': w.date, '許願人': w.person, '新周邊名稱': w.itemName, '認同人數': w.likes || 0, '參考圖片檔名': w.fileName, '參考圖片連結': w.imageUrl || '', '補充說明': w.notes || '' }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "新周邊許願清單");
             XLSX.writeFile(wb, `新周邊許願清單_${new Date().getTime()}.xlsx`);
@@ -1822,7 +1907,8 @@ createApp({
             submitReturn, submitRestock, submitWishOld,
             wishesOld, wishesNew, formWishNew, errorWishNew, submitWishNew, handleFileUpload,
             logs, filter, filteredLogs, exportLogsToExcel, exportWishesOldToExcel, exportWishesNewToExcel,
-            QuotaSection, MobileNav, FeedbackSection, obsoleteNote, ShelfBulletin, OffShelfBulletin, NotesBoard
+            QuotaSection, MobileNav, FeedbackSection, obsoleteNote, ShelfBulletin, OffShelfBulletin, NotesBoard, openNote,
+            WishOldList, WishNewList
         };
     },
     render: __appRender
@@ -2134,6 +2220,73 @@ createApp({
             : null;
     }
 }).mount('#gate');
+
+/* ───────── 周邊說明的彈窗（點卡片上的「📝 說明」打開；點外面、X 或 Esc 關閉） ───────── */
+
+createApp({
+    setup() {
+        const close = () => { noteView.item = null; };
+        onMounted(() => document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); }));
+        return () => {
+            const item = noteView.item;
+            if (!item) return null;
+            const lines = String(item.note || '').split('\n').map(line => line.trim()).filter(Boolean);
+            return h('div', {
+                class: 'fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop',
+                onClick: e => { if (e.target === e.currentTarget) close(); }
+            }, [
+                h('div', { class: 'bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute max-w-md w-full relative max-h-[85vh] overflow-y-auto' }, [
+                    h('button', { class: closeBtnCls, 'aria-label': '關閉', onClick: close }, 'X'),
+                    h('h3', { class: 'text-xl font-bold mb-4 mr-10 bg-yellow inline-block px-3 py-1 border-2 border-ink rounded-xl' }, '📝 ' + item.name),
+                    h('div', { class: 'space-y-3 font-bold text-ink leading-relaxed break-words' }, lines.map(line => h('p', null, linkify(line))))
+                ])
+            ]);
+        };
+    }
+}).mount('#note');
+
+/* ───────── 許願明細的彈窗：許願人、補充說明、參考圖片、認同人數 ───────── */
+
+createApp({
+    setup() {
+        const close = () => { wishView.wish = null; };
+        onMounted(() => document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); }));
+        const field = (label, value) => h('div', null, [
+            h('div', { class: 'text-sm font-bold text-gray-500' }, label),
+            h('div', { class: 'font-bold text-ink break-words whitespace-pre-wrap' }, value)
+        ]);
+        return () => {
+            const w = wishView.wish;
+            if (!w) return null;
+            const isNew = wishView.kind === 'new';
+            return h('div', {
+                class: 'fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop',
+                onClick: e => { if (e.target === e.currentTarget) close(); }
+            }, [
+                h('div', { class: 'bg-paper border-3 border-ink rounded-3xl p-6 shadow-cute max-w-md w-full relative max-h-[85vh] overflow-y-auto' }, [
+                    h('button', { class: closeBtnCls, 'aria-label': '關閉', onClick: close }, 'X'),
+                    h('h3', { class: 'text-xl font-bold mb-4 mr-10 inline-block px-3 py-1 border-2 border-ink rounded-xl ' + (isNew ? 'bg-green' : 'bg-yellow') }, w.itemName),
+                    h('div', { class: 'space-y-3' }, [
+                        field('許願日期', w.date || '—'),
+                        field('許願人', w.person || '—'),
+                        isNew ? null : field('許願數量', w.qty + ' 個'),
+                        isNew ? field('補充說明', w.notes || '（沒有填寫）') : null,
+                        isNew ? field('認同人數', w.likes ? w.likes + ' 位　' + heartsText(w.likes) : '還沒有人認同') : null,
+                        isNew && w.imageUrl
+                            ? h('div', null, [
+                                h('div', { class: 'text-sm font-bold text-gray-500 mb-1' }, '參考圖片'),
+                                h('a', { href: w.imageUrl, target: '_blank', rel: 'noopener' }, [
+                                    h('img', { src: w.imageUrl, alt: w.fileName || '參考圖片', class: 'w-full max-h-72 object-contain bg-white border-2 border-ink rounded-xl' })
+                                ]),
+                                h('div', { class: 'text-xs font-bold text-gray-500 mt-1' }, '點圖片可以開啟原圖')
+                            ])
+                            : null
+                    ])
+                ])
+            ]);
+        };
+    }
+}).mount('#wish');
 
 /* ───────── 送出資料時（領取、歸還、許願、管理…）在畫面中間顯示讀取中的徽章 ───────── */
 
