@@ -2216,8 +2216,8 @@ createApp({
                     gate.error ? h('div', { class: errorCls + ' mt-3' }, gate.error) : null,
                     h('button', { type: 'submit', class: submitBtnCls, disabled: gate.busy }, gate.busy ? '確認中…' : '進入'),
                     h('div', { class: 'text-xs text-gray-500 mt-4 text-left space-y-1' }, [
-                        h('p', null, '1.輸入一次後，這台裝置會記住通行碼。'),
-                        h('p', null, '2.若是使用無痕或者是訪客模式，每次開啟2G 倉儲管理系統，都需要重新輸入通行碼')
+                        h('p', null, '1.輸入一次後，這台裝置會記住通行碼'),
+                        h('p', null, '2.若使用無痕或者是訪客模式，每次開啟2G 倉儲管理系統，都需要重新輸入通行碼')
                     ])
                 ])
             ])
