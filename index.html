@@ -531,10 +531,13 @@ return function render(_ctx, _cache) {
           }, null, 8, _hoisted_41)]), _createElementVNode("h3", {
             class: "text-lg font-bold mb-3 line-clamp-2",
             title: item.name
-          }, _toDisplayString(item.name), 9, _hoisted_42), _createElementVNode("div", { class: "mt-auto" }, [_createElementVNode("button", {
+          }, _toDisplayString(item.name), 9, _hoisted_42), _createElementVNode("div", { class: "mt-auto grid grid-cols-2 gap-2" }, [_createElementVNode("button", {
             onClick: $event => (openModal('wishOld', item)),
             class: "w-full bg-yellow border-2 border-ink rounded-xl py-2 font-bold btn-cute"
-          }, "許願", 8, _hoisted_43)])]))
+          }, "許願", 8, _hoisted_43), _createElementVNode("button", {
+            onClick: $event => (openModal('return', item)),
+            class: "w-full bg-pink border-2 border-ink rounded-xl py-2 font-bold btn-cute"
+          }, "歸還", 8, ["onClick"])])]))
         }), 128))])]), _createElementVNode("div", null, [_cache[9] || (_cache[9] = _createElementVNode("h2", { class: "text-3xl font-bold mb-6 flex items-center gap-3 text-grayDark" }, [_createElementVNode("span", { class: "bg-grayDark w-4 h-8 rounded-full border-2 border-ink inline-block" }), _createTextVNode(" 絕版品 ")], -1)), _createElementVNode("div", _hoisted_44, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(obsoleteItems, (item) => {
           return (_openBlock(), _createElementBlock("div", {
             key: item.id,
@@ -948,7 +951,7 @@ const obsoleteNote = item => Object.prototype.hasOwnProperty.call(OBSOLETE_NOTES
     ? OBSOLETE_NOTES[item.id]
     : '2B員購頁面已下架';
 
-// 已下架周邊頁面只有絕版品會出現「歸還」：原本在上架、加贈區，領完才移到絕版品的周邊（例如卡牌筆記本、資料夾）會自動出現，
+// 已下架周邊區每張卡片都有「歸還」；絕版品區只有原本在上架、加贈區，領完才移到絕版品的周邊（例如卡牌筆記本、資料夾）會自動出現，
 // 一開始就是絕版的周邊要歸還的話，把編號加在這裡
 const RETURNABLE_OBSOLETE = [
     'o-6', // PaGamO 螢光筆(橘)
