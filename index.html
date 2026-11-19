@@ -463,7 +463,7 @@ return function render(_ctx, _cache) {
               class: "w-full h-48 object-contain rounded-t-2xl"
             }, null, 8, _hoisted_17)]),
             _createElementVNode("h3", {
-              class: "text-xl font-bold mb-1 line-clamp-1",
+              class: "text-xl font-bold mb-1 line-clamp-2",
               title: item.name
             }, _toDisplayString(item.name), 9, _hoisted_18),
             _createElementVNode("div", _hoisted_19, [_createElementVNode("span", null, [_cache[2] || (_cache[2] = _createTextVNode("庫存: ", -1)), _createElementVNode("span", { class: _normalizeClass({'text-red-500 text-xl': item.stock <= 10, 'text-ink text-xl': item.stock > 10}) }, _toDisplayString(item.stock), 3)]), _createElementVNode("span", _hoisted_20, "成本: $" + _toDisplayString(item.cost), 1)]),
@@ -497,7 +497,7 @@ return function render(_ctx, _cache) {
               class: "w-full h-48 object-contain rounded-t-2xl"
             }, null, 8, _hoisted_29)]),
             _createElementVNode("h3", {
-              class: "text-xl font-bold mb-1 line-clamp-1",
+              class: "text-xl font-bold mb-1 line-clamp-2",
               title: item.name
             }, _toDisplayString(item.name), 9, _hoisted_30),
             _createElementVNode("div", _hoisted_31, [_createElementVNode("span", null, [_cache[4] || (_cache[4] = _createTextVNode("庫存: ", -1)), _createElementVNode("span", { class: _normalizeClass({'text-red-500 text-xl': item.stock <= 10, 'text-ink text-xl': item.stock > 10}) }, _toDisplayString(item.stock), 3)]), _createElementVNode("span", _hoisted_32, "成本: $" + _toDisplayString(item.cost), 1)]),
@@ -529,15 +529,12 @@ return function render(_ctx, _cache) {
             alt: item.name,
             class: "w-full h-full object-contain"
           }, null, 8, _hoisted_41)]), _createElementVNode("h3", {
-            class: "text-lg font-bold mb-3 line-clamp-1",
+            class: "text-lg font-bold mb-3 line-clamp-2",
             title: item.name
-          }, _toDisplayString(item.name), 9, _hoisted_42), _createElementVNode("div", { class: "mt-auto grid grid-cols-2 gap-2" }, [_createElementVNode("button", {
+          }, _toDisplayString(item.name), 9, _hoisted_42), _createElementVNode("div", { class: "mt-auto" }, [_createElementVNode("button", {
             onClick: $event => (openModal('wishOld', item)),
             class: "w-full bg-yellow border-2 border-ink rounded-xl py-2 font-bold btn-cute"
-          }, "我要許願", 8, _hoisted_43), _createElementVNode("button", {
-            onClick: $event => (openModal('return', item)),
-            class: "w-full bg-pink border-2 border-ink rounded-xl py-2 font-bold btn-cute"
-          }, "歸還", 8, ["onClick"])])]))
+          }, "許願", 8, _hoisted_43)])]))
         }), 128))])]), _createElementVNode("div", null, [_cache[9] || (_cache[9] = _createElementVNode("h2", { class: "text-3xl font-bold mb-6 flex items-center gap-3 text-grayDark" }, [_createElementVNode("span", { class: "bg-grayDark w-4 h-8 rounded-full border-2 border-ink inline-block" }), _createTextVNode(" 絕版品 ")], -1)), _createElementVNode("div", _hoisted_44, [(_openBlock(true), _createElementBlock(_Fragment, null, _renderList(obsoleteItems, (item) => {
           return (_openBlock(), _createElementBlock("div", {
             key: item.id,
@@ -547,14 +544,17 @@ return function render(_ctx, _cache) {
             alt: item.name,
             class: "w-full h-full object-contain"
           }, null, 8, _hoisted_46), _cache[7] || (_cache[7] = _createElementVNode("div", { class: "absolute inset-0 flex items-center justify-center pointer-events-none" }, [_createElementVNode("span", { class: "text-lg font-black rotate-12 bg-grayDark/90 text-white px-3 py-1 border-2 border-white rounded-xl shadow-cute-sm" }, "絕版")], -1))]), _createElementVNode("h3", {
-            class: "text-lg font-bold mb-1 line-clamp-1",
+            class: "text-lg font-bold mb-1 line-clamp-2",
             title: item.name
           }, _toDisplayString(item.name), 9, _hoisted_47), _createElementVNode("div", { class: "mt-auto pt-1 space-y-2" }, [(obsoleteNote(item))
             ? (_openBlock(), _createElementBlock("p", { key: 0, class: "text-sm font-bold text-yellow" }, _toDisplayString(obsoleteNote(item)), 1))
-            : _createCommentVNode("", true), _createElementVNode("button", {
-            onClick: $event => (openModal('return', item)),
-            class: "w-full bg-pink text-ink border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
-          }, "歸還", 8, ["onClick"])])]))
+            : _createCommentVNode("", true), (canReturnOffShelf(item))
+            ? (_openBlock(), _createElementBlock("button", {
+                key: 1,
+                onClick: $event => (openModal('return', item)),
+                class: "w-full bg-pink text-ink border-2 border-ink rounded-xl py-1 font-bold btn-cute text-sm"
+              }, "歸還", 8, ["onClick"]))
+            : _createCommentVNode("", true)])]))
         }), 128))])])], 512), [[_vShow, activeTab === 'discontinued']]),
         _withDirectives(_createElementVNode("div", null, [_Vue.createVNode(WishBulletin), _createElementVNode("div", _hoisted_48, [_createElementVNode("div", _hoisted_49, [_createElementVNode("div", _hoisted_50, [_cache[10] || (_cache[10] = _createElementVNode("h2", { class: "text-2xl font-bold border-b-3 border-ink pb-2 bg-yellow inline-block px-4 rounded-xl" }, "曾上架過周邊許願清單", -1)), _createElementVNode("button", {
           onClick: exportWishesOldToExcel,
@@ -744,7 +744,7 @@ return function render(_ctx, _cache) {
                               class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
                             }, [
                               _createElementVNode("option", { value: "", disabled: "" }, "請選擇其他縣市"),
-                              (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(options.otherCounties, (o) => {
+                              (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(otherCountyChoices, (o) => {
                                 return (_openBlock(), _createElementBlock("option", { key: o, value: o }, _toDisplayString(o), 9, ["value"]))
                               }), 128))
                             ], 8, ["onUpdate:modelValue"]), [[_vModelSelect, forms.checkout.otherLocation]])]))
@@ -779,11 +779,15 @@ return function render(_ctx, _cache) {
                   }, "X", 8, _hoisted_131),
                   _cache[41] || (_cache[41] = _createElementVNode("h3", { class: "text-2xl font-bold mb-4 bg-pink inline-block px-3 py-1 border-2 border-ink rounded-xl" }, "歸還周邊", -1)),
                   _createElementVNode("div", _hoisted_132, [
-                    _createElementVNode("div", null, [_cache[33] || (_cache[33] = _createElementVNode("label", { class: "block font-bold mb-1" }, "負責夥伴名字 *", -1)), _withDirectives(_createElementVNode("input", {
-                      type: "text",
+                    _createElementVNode("div", null, [_cache[33] || (_cache[33] = _createElementVNode("label", { class: "block font-bold mb-1" }, "歸還夥伴 *", -1)), _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": $event => ((forms.return.person) = $event),
                       class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
-                    }, null, 8, _hoisted_133), [[_vModelText, forms.return.person]])]),
+                    }, [
+                      _createElementVNode("option", { value: "", disabled: "" }, "請選擇"),
+                      (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(options.partners, (o) => {
+                        return (_openBlock(), _createElementBlock("option", { key: o, value: o }, _toDisplayString(o), 9, ["value"]))
+                      }), 128))
+                    ], 8, _hoisted_133), [[_vModelSelect, forms.return.person]])]),
                     _createElementVNode("div", _hoisted_134, [_cache[38] || (_cache[38] = _createElementVNode("label", { class: "block font-bold mb-1" }, "歸還周邊名稱 *", -1)), _withDirectives(_createElementVNode("input", {
                       type: "text",
                       "onUpdate:modelValue": $event => ((forms.return.itemName) = $event),
@@ -850,13 +854,17 @@ return function render(_ctx, _cache) {
                     onClick: closeModal,
                     class: "absolute top-4 right-4 w-8 h-8 bg-white border-2 border-ink rounded-full font-bold flex items-center justify-center hover:bg-red-100 transition"
                   }, "X", 8, _hoisted_152),
-                  _cache[48] || (_cache[48] = _createElementVNode("h3", { class: "text-2xl font-bold mb-2 bg-yellow inline-block px-3 py-1 border-2 border-ink rounded-xl" }, "我要許願", -1)),
+                  _cache[48] || (_cache[48] = _createElementVNode("h3", { class: "text-2xl font-bold mb-2 bg-yellow inline-block px-3 py-1 border-2 border-ink rounded-xl" }, "許願", -1)),
                   _createElementVNode("h4", _hoisted_153, "重新上架：" + _toDisplayString(activeItem.name), 1),
-                  _createElementVNode("div", _hoisted_154, [_createElementVNode("div", null, [_cache[46] || (_cache[46] = _createElementVNode("label", { class: "block font-bold mb-1" }, "許願人名字 *", -1)), _withDirectives(_createElementVNode("input", {
-                    type: "text",
+                  _createElementVNode("div", _hoisted_154, [_createElementVNode("div", null, [_cache[46] || (_cache[46] = _createElementVNode("label", { class: "block font-bold mb-1" }, "許願夥伴 *", -1)), _withDirectives(_createElementVNode("select", {
                     "onUpdate:modelValue": $event => ((forms.wishOld.person) = $event),
                     class: "w-full border-2 border-ink rounded-xl p-2 bg-white"
-                  }, null, 8, _hoisted_155), [[_vModelText, forms.wishOld.person]])]), _createElementVNode("div", null, [_cache[47] || (_cache[47] = _createElementVNode("label", { class: "block font-bold mb-1" }, "許願數量 *", -1)), _withDirectives(_createElementVNode("input", {
+                  }, [
+                    _createElementVNode("option", { value: "", disabled: "" }, "請選擇"),
+                    (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(options.partners, (o) => {
+                      return (_openBlock(), _createElementBlock("option", { key: o, value: o }, _toDisplayString(o), 9, ["value"]))
+                    }), 128))
+                  ], 8, _hoisted_155), [[_vModelSelect, forms.wishOld.person]])]), _createElementVNode("div", null, [_cache[47] || (_cache[47] = _createElementVNode("label", { class: "block font-bold mb-1" }, "許願數量 *", -1)), _withDirectives(_createElementVNode("input", {
                     type: "number",
                     "onUpdate:modelValue": $event => ((forms.wishOld.qty) = $event),
                     min: "1",
@@ -939,6 +947,13 @@ const OBSOLETE_NOTES = {
 const obsoleteNote = item => Object.prototype.hasOwnProperty.call(OBSOLETE_NOTES, item.id)
     ? OBSOLETE_NOTES[item.id]
     : '2B員購頁面已下架';
+
+// 已下架周邊頁面只有絕版品會出現「歸還」：原本在上架、加贈區，領完才移到絕版品的周邊（例如卡牌筆記本、資料夾）會自動出現，
+// 一開始就是絕版的周邊要歸還的話，把編號加在這裡
+const RETURNABLE_OBSOLETE = [
+    'o-6', // PaGamO 螢光筆(橘)
+];
+const canReturnOffShelf = item => item.category === '上架' || item.category === '加贈' || RETURNABLE_OBSOLETE.includes(item.id);
 
 /* ───────── 共用資料：主畫面和管理面板都讀這裡 ───────── */
 
@@ -1754,6 +1769,11 @@ createApp({
             const mine = assignedCounties(forms.value.checkout.person);
             return mine.length ? [...mine, '其他'] : options.value.counties;
         });
+        // 選「其他」之後：出現這位夥伴負責縣市以外的所有縣市
+        const otherCountyChoices = computed(() => {
+            const mine = assignedCounties(forms.value.checkout.person);
+            return options.value.counties.filter(c => !mine.includes(c));
+        });
         watch(() => forms.value.checkout.person, person => {
             const mine = assignedCounties(person);
             forms.value.checkout.location = mine.length === 1 ? mine[0] : '';
@@ -1950,8 +1970,8 @@ createApp({
             submitReturn, submitRestock, submitWishOld,
             wishesOld, wishesNew, formWishNew, errorWishNew, submitWishNew, handleFileUpload,
             logs, filter, filteredLogs, exportLogsToExcel, exportWishesOldToExcel, exportWishesNewToExcel,
-            QuotaSection, MobileNav, FeedbackSection, obsoleteNote, ShelfBulletin, OffShelfBulletin, NotesBoard, openNote,
-            WishOldList, WishNewList, WishBulletin, options, countyChoices
+            QuotaSection, MobileNav, FeedbackSection, obsoleteNote, canReturnOffShelf,ShelfBulletin, OffShelfBulletin, NotesBoard, openNote,
+            WishOldList, WishNewList, WishBulletin, options, countyChoices, otherCountyChoices
         };
     },
     render: __appRender
